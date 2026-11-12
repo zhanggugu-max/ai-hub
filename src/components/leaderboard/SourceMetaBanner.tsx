@@ -89,6 +89,11 @@ export function SourceMetaBanner({ snapshot }: SourceMetaBannerProps) {
           </Dialog>
         </div>
       </div>
+
+      <p className="mt-3 border-t border-slate-100 pt-2.5 text-xs leading-relaxed text-slate-500">
+        <span className="font-medium text-slate-700">评分口径：</span>
+        {snapshot.methodologyNote}
+      </p>
     </section>
   );
 }
