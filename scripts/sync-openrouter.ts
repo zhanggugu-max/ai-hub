@@ -1,13 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
 import type { LeaderboardCategory, LicenseType } from '../src/data/leaderboard/mock-data';
 
-const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const rawSupabaseUrl = process.env.SUPABASE_URL?.trim() || undefined;
+const rawNextPublicUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || undefined;
+const supabaseUrl = rawSupabaseUrl ?? rawNextPublicUrl;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || undefined;
 
 if (!supabaseUrl || !serviceRoleKey) {
+  console.error('❌ 缺少必要的 Supabase 环境变量（Secrets 未配置、名称不一致或值为空）：');
+  console.error(`   - SUPABASE_URL: ${rawSupabaseUrl ? '已配置' : '缺失'}`);
+  console.error(`   - NEXT_PUBLIC_SUPABASE_URL: ${rawNextPublicUrl ? '已配置' : '缺失'}`);
+  console.error(`   - SUPABASE_SERVICE_ROLE_KEY: ${serviceRoleKey ? '已配置' : '缺失'}`);
   console.error(
-    '❌ 缺少环境变量：请配置 SUPABASE_URL（或 NEXT_PUBLIC_SUPABASE_URL）与 SUPABASE_SERVICE_ROLE_KEY'
+    '👉 请前往 GitHub 仓库 Settings -> Secrets and variables -> Actions 核对变量名与内容后重新触发。'
   );
+  process.exit(1);
+}
+
+try {
+  new URL(supabaseUrl);
+} catch {
+  console.error('❌ SUPABASE_URL 格式非法，请确认是以 https:// 开头的完整项目 URL（勿含多余引号或换行）。');
   process.exit(1);
 }
 
@@ -191,7 +204,10 @@ function deduplicateBySeries(models: NormalizedModel[]): NormalizedModel[] {
 
 async function fetchBenchmarkedOpenRouterModels(): Promise<NormalizedModel[]> {
   const response = await fetch(OPENROUTER_MODELS_URL, {
-    headers: { Accept: 'application/json' },
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': 'ai-hub-leaderboard-sync/1.0',
+    },
     signal: AbortSignal.timeout(20000),
   });
 
@@ -491,15 +507,19 @@ async function main() {
     const finishedAt = new Date();
     const message = err instanceof Error ? err.message : String(err);
 
-    await supabase.from('sync_logs').insert({
-      job_name: 'sync_openrouter_models',
-      target_table: 'ai_models',
-      status: 'failed',
-      error_message: message,
-      started_at: startedAt.toISOString(),
-      finished_at: finishedAt.toISOString(),
-      duration_ms: finishedAt.getTime() - startedAt.getTime(),
-    });
+    try {
+      await supabase.from('sync_logs').insert({
+        job_name: 'sync_openrouter_models',
+        target_table: 'ai_models',
+        status: 'failed',
+        error_message: message,
+        started_at: startedAt.toISOString(),
+        finished_at: finishedAt.toISOString(),
+        duration_ms: finishedAt.getTime() - startedAt.getTime(),
+      });
+    } catch {
+      // 忽略写入失败审计日志时的二次网络异常，确保保留主报错
+    }
 
     console.error('❌ OpenRouter 同步失败:', message);
     process.exit(1);
