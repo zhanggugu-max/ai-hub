@@ -118,16 +118,15 @@ export function SourceMetaBanner({ snapshot }: SourceMetaBannerProps) {
                   <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-slate-600">
                     <li>
                       <strong className="text-slate-800">第一优先级（LMArena 盲测）</strong>：
-                      命中 LMArena <code>text_style_control</code> 公开数据集时，直接使用其 overall Elo 线性换算至 0–100（权重 100%）。
+                      命中 LMArena 官方 <code>text</code> 公开数据集时，直接使用其 overall Elo 线性换算至 0–100（权重 100%）。
                     </li>
                     <li>
                       <strong className="text-slate-800">第二优先级（AA 综合指数）</strong>：
-                      若无 LMArena overall 成绩，采用 OpenRouter 收录的 Artificial Analysis 综合指数归一化换算。
+                      若无 LMArena overall 成绩，采用 OpenRouter 收录的 Artificial Analysis 综合指数回归校准（封顶 93.5 分）。
                     </li>
                     <li>
                       <strong className="text-slate-800">第三优先级（子项/DA 估算）</strong>：
-                      前两项均缺失时，结合 AA 代码（0.24~0.28）/ Agent（0.14~0.35）与 DesignArena（0.45）加权估算，且
-                      <strong>封顶 72 分</strong>，防止缺主榜评测的新模型虚高排名前列。
+                      前两项均缺失时，结合 AA 代码/Agent 子项（封顶 66 分）与 DesignArena（封顶 60 分）保守估算，防止缺主榜评测的小众模型虚高排名前列。
                     </li>
                   </ul>
                 </div>

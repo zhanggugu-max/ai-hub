@@ -36,19 +36,19 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 
 const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
 const LMARENA_DATASET_PATH =
-  'datasets/lmarena-ai/leaderboard-dataset/resolve/main/text_style_control/latest-00000-of-00001.parquet';
+  'datasets/lmarena-ai/leaderboard-dataset/resolve/main/text/latest-00000-of-00001.parquet';
 const LMARENA_PARQUET_MIRRORS = [
   `https://huggingface.co/${LMARENA_DATASET_PATH}`,
   `https://hf-mirror.com/${LMARENA_DATASET_PATH}`,
 ];
 const LMARENA_TREE_MIRRORS = [
-  'https://huggingface.co/api/datasets/lmarena-ai/leaderboard-dataset/tree/main/text_style_control',
-  'https://hf-mirror.com/api/datasets/lmarena-ai/leaderboard-dataset/tree/main/text_style_control',
+  'https://huggingface.co/api/datasets/lmarena-ai/leaderboard-dataset/tree/main/text',
+  'https://hf-mirror.com/api/datasets/lmarena-ai/leaderboard-dataset/tree/main/text',
 ];
 
 const METHODOLOGY_NOTES: Record<LeaderboardCategory, string> = {
   overall:
-    '综合分按来源优先级统一归一化为 0–100 量纲：① 优先采用 LMArena 盲测 overall Elo（权重 100%）；② 若暂无 LMArena 成绩，其次使用 OpenRouter Artificial Analysis（AA）综合指数；③ 前两项均缺失时，按 AA 代码/Agent 子项与 DesignArena 加权估算且封顶 72 分。缺失处理：仅缺代码、数学或复杂推理子项时，不补零也不拉低综合分（对应列标注“暂无”，按子项排序时自动置底）。',
+    '综合分按来源优先级统一归一化为 0–100 量纲：① 首选 LMArena 官方 Text 盲测 overall Elo（权重 100%，与 arena.ai 主榜一致）；② 若尚未进入 LMArena，则使用 OpenRouter Artificial Analysis（AA）综合指数回归校准（封顶 93.5 分）；③ 前两项均缺失时，才按 AA 代码/Agent 子项（封顶 66 分）或 DesignArena（封顶 60 分）保守估算。缺失处理：仅缺代码、数学或复杂推理子项时，不补零也不拉低综合分（对应列标注“暂无”，按子项排序时自动置底）。',
   open_source:
     '自动筛选具备 Hugging Face Hub 权重 ID 或 LMArena 开源协议标注的主流开源模型（DeepSeek、Qwen、Llama、GLM、Kimi、Muse 等），综合分采用与综合榜一致的“LMArena Elo -> AA 综合指数 -> 子项估算（封顶 72 分）”三级归一化逻辑；缺失子项不拉低综合分。',
   api_value:
@@ -158,17 +158,21 @@ function normalizeMatchKey(raw: string, stripQualifiers: boolean): string {
     .replace(/\b(202\d{5}|20\d{2}-\d{2}-\d{2}|\d{2}-\d{2}|\d{4})\b/g, ' ');
 
   if (stripQualifiers) {
-    text = text.replace(
-      /\b(preview|beta\s*\d*|exp|experimental|reasoning|thinking|instant|instruct|chat|it|open)\b/g,
-      ' '
-    );
+    text = text
+      .replace(/^(amazon|google|meta|openai|anthropic)\s+/i, '')
+      .replace(/\b(17b\s*128e|17b\s*16e)\b/g, ' ')
+      .replace(/\b(mistral\s+small\s+3\s*[.\s]?2)\s+24b\b/g, '$1')
+      .replace(
+        /\b(preview|beta\s*\d*|exp|experimental|reasoning|thinking|instant|instruct|chat|it|open)\b/g,
+        ' '
+      );
   }
 
   return text.replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
 /**
- * 过滤真正的路由前缀与非文本输出噪音，放行 -preview / -exp / 带日期后缀（如 -1017、-0902）的真实版本。
+ * 过滤真正的路由前缀、纯生图模型与非文本输出噪音，放行 -preview / -exp / 带日期后缀的真实版本。
  */
 function isNoiseVariant(model: OpenRouterModelRaw): boolean {
   const idLower = model.id.toLowerCase();
@@ -177,6 +181,7 @@ function isNoiseVariant(model: OpenRouterModelRaw): boolean {
   if (idLower.includes(':')) return true;
   if (idLower.startsWith('openrouter/') || idLower.startsWith('switchpoint/')) return true;
   if (/\((free|batch)\)/i.test(nameLower)) return true;
+  if (/-image(-mini|-preview)?$/i.test(idLower)) return true;
 
   if (model.expiration_date) {
     const expMs = Date.parse(model.expiration_date);
@@ -239,14 +244,18 @@ function arenaSubEloTo100(elo: number): number {
 }
 
 function aaIndexTo100(aaIndex: number): number {
-  return clamp(5, 96.0, 68 + 0.43 * aaIndex);
+  return clamp(5, 93.5, 46 + 0.72 * aaIndex);
+}
+
+function designArenaEloTo100(daElo: number): number {
+  return clamp(20, 60, (daElo - 750) / 10);
 }
 
 /**
  * 统一综合能力评分（0–100 量纲）：
  * - 拥有 LMArena Overall Elo 时直接按 LMArena Elo 单调映射（避免旧模型因缺失 AA 指标而反超新模型）；
- * - 暂未收录进 LMArena 但拥有 AA Intelligence Index 的超新模型，按经验回归曲线校准映射；
- * - 仅拥有 AA Coding/Agentic 或 DesignArena Elo 时，按保守经验回归映射到合理区间（上限 72）。
+ * - 暂未收录进 LMArena 但拥有 AA Intelligence Index 的新模型，按稳健回归曲线校准（封顶 93.5，不轻易反超 LMArena 头部榜首）；
+ * - 仅拥有 AA Coding/Agentic 或 DesignArena Elo 时，按保守经验回归映射到中低分区间（AA 子项封顶 66、纯 DA 封顶 60）。
  */
 function computeUnifiedScores(params: {
   lmArena: LmArenaModelScores | null;
@@ -277,20 +286,22 @@ function computeUnifiedScores(params: {
   } else {
     let aaSub: number | null = null;
     if (params.agenticIndex !== null && params.codingIndex !== null) {
-      aaSub = 48 + 0.24 * params.codingIndex + 0.14 * params.agenticIndex;
+      aaSub = Math.min(66, 38 + 0.24 * params.codingIndex + 0.14 * params.agenticIndex);
     } else if (params.codingIndex !== null) {
-      aaSub = 46 + 0.28 * params.codingIndex;
+      aaSub = Math.min(66, 36 + 0.3 * params.codingIndex);
     } else if (params.agenticIndex !== null) {
-      aaSub = 46 + 0.35 * params.agenticIndex;
+      aaSub = Math.min(64, 36 + 0.35 * params.agenticIndex);
     }
 
     const daSub =
-      params.designArenaElo !== null ? arenaOverallEloTo100(params.designArenaElo + 220) : null;
+      params.designArenaElo !== null ? designArenaEloTo100(params.designArenaElo) : null;
 
     if (aaSub !== null && daSub !== null) {
-      overallScore = Math.min(72, 0.55 * aaSub + 0.45 * daSub);
-    } else if (aaSub !== null || daSub !== null) {
-      overallScore = Math.min(72, (aaSub ?? daSub)!);
+      overallScore = Math.min(66, 0.65 * aaSub + 0.35 * daSub);
+    } else if (aaSub !== null) {
+      overallScore = aaSub;
+    } else if (daSub !== null) {
+      overallScore = daSub;
     }
   }
 
