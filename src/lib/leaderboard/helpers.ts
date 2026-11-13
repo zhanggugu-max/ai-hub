@@ -73,6 +73,15 @@ export interface ScoreSourceInfo {
 
 /** 根据模型亮点标签与子项指标识别综合分主来源 */
 export function getScoreSourceInfo(entry: LeaderboardEntry): ScoreSourceInfo {
+  const lb2Tag = entry.highlights.find((tag) => tag.startsWith('LB2:'));
+  if (lb2Tag) {
+    const score = lb2Tag.slice('LB2:'.length);
+    return {
+      shortLabel: 'LiveBench 2.0',
+      detail: `综合分直接取自 LiveBench 2.0 官方无污染长程评测 (${score})：由 Long Agentic (×2)、Coding (×1.5)、Design (×1.5)、Reasoning、Browser、Data Analysis、Research 加权汇总。`,
+    };
+  }
+
   const arenaTag = entry.highlights.find((tag) => tag.startsWith('Arena:'));
   if (arenaTag) {
     const elo = arenaTag.slice('Arena:'.length);
@@ -134,7 +143,12 @@ const VENDOR_HOMEPAGES: Record<string, string> = {
   MiniMax: 'https://www.minimax.io/',
   Cohere: 'https://cohere.com/',
   Amazon: 'https://aws.amazon.com/bedrock/',
-  Xiaomi: 'https://www.mi.com/',
+  Xiaomi: 'https://mimo.xiaomi.com/',
+  NVIDIA: 'https://www.nvidia.com/en-us/ai-data-science/foundation-models/nemotron/',
+  StepFun: 'https://www.stepfun.com/',
+  AbacusAI: 'https://abacus.ai/',
+  'Thinking Machines': 'https://thinkingmachines.ai/',
+  'Reflection AI': 'https://reflection.ai/',
 };
 
 /** 匹配主流模型研发商的官方主页（无法确认的第三方厂商返回 null，避免误标） */
@@ -168,6 +182,8 @@ function getNumericSortValue(
       return entry.scores.coding ?? null;
     case 'mathScore':
       return entry.scores.math ?? null;
+    case 'reasoningScore':
+      return entry.scores.reasoning ?? null;
     case 'contextWindow':
       return entry.contextWindowK;
     case 'inputPricePer1M':

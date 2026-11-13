@@ -33,6 +33,9 @@ export function LeaderboardCardList({
   onResetFilters,
 }: LeaderboardCardListProps) {
   const isApiValueBoard = category === 'api_value';
+  const preferReasoning =
+    entries.some((e) => e.scores.reasoning !== undefined) &&
+    entries.every((e) => e.scores.math === undefined);
 
   if (entries.length === 0) {
     return (
@@ -135,9 +138,17 @@ export function LeaderboardCardList({
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-slate-500">数学</div>
+                    <div className="text-[11px] text-slate-500">
+                      {preferReasoning ? '推理' : '数学'}
+                    </div>
                     <div className="font-medium tabular-nums text-slate-800">
-                      {entry.scores.math !== undefined ? entry.scores.math.toFixed(1) : '暂无'}
+                      {preferReasoning
+                        ? entry.scores.reasoning !== undefined
+                          ? entry.scores.reasoning.toFixed(1)
+                          : '暂无'
+                        : entry.scores.math !== undefined
+                          ? entry.scores.math.toFixed(1)
+                          : '暂无'}
                     </div>
                   </div>
                 </>

@@ -19,13 +19,9 @@ interface SourceMetaBannerProps {
 }
 
 const DATA_SOURCES = [
-  { label: 'LMArena 盲测榜', url: 'https://arena.ai/leaderboard' },
-  {
-    label: 'HF 官方数据集',
-    url: 'https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset',
-  },
+  { label: 'LiveBench 2.0 官网', url: 'https://livebench.ai/#/' },
+  { label: 'LiveBench GitHub', url: 'https://github.com/LiveBench/LiveBench' },
   { label: 'OpenRouter 模型目录', url: 'https://openrouter.ai/models' },
-  { label: 'Artificial Analysis', url: 'https://artificialanalysis.ai/' },
 ];
 
 export function SourceMetaBanner({ snapshot }: SourceMetaBannerProps) {
@@ -55,7 +51,7 @@ export function SourceMetaBanner({ snapshot }: SourceMetaBannerProps) {
             </time>
             {arenaSnapshotDate && (
               <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
-                Arena 快照 {arenaSnapshotDate}
+                LiveBench {arenaSnapshotDate}
               </span>
             )}
           </div>
@@ -114,19 +110,20 @@ export function SourceMetaBanner({ snapshot }: SourceMetaBannerProps) {
               </DialogHeader>
               <div className="space-y-3.5 pt-2 text-sm leading-relaxed text-slate-700">
                 <div className="rounded-lg bg-slate-50 p-3.5">
-                  <div className="mb-1.5 font-semibold text-slate-900">1. 综合分来源与权重分级</div>
+                  <div className="mb-1.5 font-semibold text-slate-900">1. LiveBench 2.0 评测体系与权重</div>
                   <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-slate-600">
                     <li>
-                      <strong className="text-slate-800">第一优先级（LMArena 盲测）</strong>：
-                      命中 LMArena 官方 <code>text</code> 公开数据集时，直接使用其 overall Elo 线性换算至 0–100（权重 100%）。
+                      <strong className="text-slate-800">主榜综合分</strong>：
+                      直接抓取自 LiveBench 2.0 官方最新公开数据集（<code>table.csv</code> 与 <code>categories.json</code>），按官方加权平均计算：
+                      <strong>Long Agentic (×2)</strong>、<strong>Coding (×1.5)</strong>、<strong>Design (×1.5)</strong>，以及 Reasoning / Browser / Data Analysis / Research（其余各 ×1）。
                     </li>
                     <li>
-                      <strong className="text-slate-800">第二优先级（AA 综合指数）</strong>：
-                      若无 LMArena overall 成绩，采用 OpenRouter 收录的 Artificial Analysis 综合指数回归校准（封顶 93.5 分）。
+                      <strong className="text-slate-800">无污染真实任务</strong>：
+                      采用定期更新的非公开长程实战题目，覆盖研究报告、复杂代码修复、浏览交互与长周期 Agent 执行，避免主观聊天偏好导致的旧模型虚高。
                     </li>
                     <li>
-                      <strong className="text-slate-800">第三优先级（子项/DA 估算）</strong>：
-                      前两项均缺失时，结合 AA 代码/Agent 子项（封顶 66 分）与 DesignArena（封顶 60 分）保守估算，防止缺主榜评测的小众模型虚高排名前列。
+                      <strong className="text-slate-800">定价与上下文补充</strong>：
+                      API 输入/输出单价直接取自 LiveBench 官方 <code>cost.csv</code>；模型上下文长度、Slug 与官方发布链接结合 OpenRouter 目录与 LiveBench 清单核对。
                     </li>
                   </ul>
                 </div>
@@ -134,8 +131,7 @@ export function SourceMetaBanner({ snapshot }: SourceMetaBannerProps) {
                 <div className="rounded-lg bg-slate-50 p-3.5">
                   <div className="mb-1.5 font-semibold text-slate-900">2. 缺失指标如何处理</div>
                   <p className="text-xs leading-relaxed text-slate-600">
-                    新发布模型常先有综合盲测分或 AA 综合指数，而代码、数学、复杂推理等分项基准尚未覆盖。本站
-                    <strong>不把缺项按 0 分拉低综合分</strong>，也不猜测补值：表格与对比中缺项明确标注为「暂无」或「暂无数据」，并在按该列排序时自动排在末尾；若对比组内某一行全部模型均无数据，将自动折叠并提示。
+                    LiveBench 2.0 官方若某维度尚在重测（标注为 <code>—</code>），计算加权总分时按官方规则跳过该维度、仅对已测维度加权平均，不补零拉低总分；界面中未测维度标注为「暂无」或「暂无数据」，在对比表中全空行会自动折叠提示。
                   </p>
                 </div>
 

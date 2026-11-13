@@ -1,6 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { parquetReadObjects } from 'hyparquet';
-import { compressors } from 'hyparquet-compressors';
 import type { LeaderboardCategory, LicenseType } from '../src/data/leaderboard/mock-data';
 
 const rawSupabaseUrl = process.env.SUPABASE_URL?.trim() || undefined;
@@ -34,98 +32,58 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
   },
 });
 
+const LIVEBENCH_BASE_URL = 'https://livebench.ai/';
 const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
-const LMARENA_DATASET_PATH =
-  'datasets/lmarena-ai/leaderboard-dataset/resolve/main/text/latest-00000-of-00001.parquet';
-const LMARENA_PARQUET_MIRRORS = [
-  `https://huggingface.co/${LMARENA_DATASET_PATH}`,
-  `https://hf-mirror.com/${LMARENA_DATASET_PATH}`,
-];
-const LMARENA_TREE_MIRRORS = [
-  'https://huggingface.co/api/datasets/lmarena-ai/leaderboard-dataset/tree/main/text',
-  'https://hf-mirror.com/api/datasets/lmarena-ai/leaderboard-dataset/tree/main/text',
-];
 
 const METHODOLOGY_NOTES: Record<LeaderboardCategory, string> = {
   overall:
-    '综合分按来源优先级统一归一化为 0–100 量纲：① 首选 LMArena 官方 Text 盲测 overall Elo（权重 100%，与 arena.ai 主榜一致）；② 若尚未进入 LMArena，则使用 OpenRouter Artificial Analysis（AA）综合指数回归校准（封顶 93.5 分）；③ 前两项均缺失时，才按 AA 代码/Agent 子项（封顶 66 分）或 DesignArena（封顶 60 分）保守估算。缺失处理：仅缺代码、数学或复杂推理子项时，不补零也不拉低综合分（对应列标注“暂无”，按子项排序时自动置底）。',
+    '数据直接抓取自 LiveBench 2.0 官方发布版本（无污染长程真实任务评测），覆盖 Long Agentic (×2)、Coding (×1.5)、Design (×1.5)、Reasoning (×1)、Browser (×1)、Data Analysis (×1)、Research (×1) 七大维度加权计算综合分；定价取自 LiveBench cost.csv，公开权重标注与官方链接取自 LiveBench 模型清单，上下文长度由 OpenRouter 校验补充。',
   open_source:
-    '自动筛选具备 Hugging Face Hub 权重 ID 或 LMArena 开源协议标注的主流开源模型（DeepSeek、Qwen、Llama、GLM、Kimi、Muse 等），综合分采用与综合榜一致的“LMArena Elo -> AA 综合指数 -> 子项估算（封顶 72 分）”三级归一化逻辑；缺失子项不拉低综合分。',
+    '筛选 LiveBench 2.0 官方标记为 openweight（开源权重并附 Hugging Face / 模型页入口）的参评模型，按与综合榜一致的七维加权综合分降序排列，同时保留代码、复杂推理及 API 成本数据。',
   api_value:
-    '筛选综合分 ≥ 55 且具明确计费单价的在役模型。加权均价 ($/1M) = (输入单价 + 3 × 输出单价) / 4；性价比分 = 综合分 / ∛加权均价，数值越高代表同成本下综合能力越强。',
+    '筛选 LiveBench 2.0 综合分 ≥ 45 且具备官方 cost.csv 计费单价的在役模型。加权均价 ($/1M) = (输入单价 + 3 × 输出单价) / 4；性价比分 = 综合分 / ∛加权均价，数值越高代表同成本下长程真实能力越强。',
 };
 
 const OFFICIAL_DISCLAIMER =
-  '本站榜单数据定时融合自 LMArena 官方公开数据集（lmarena-ai/leaderboard-dataset）与 OpenRouter 公开模型目录（含 Artificial Analysis / DesignArena 评测指标），仅供开发者学习与选型参考。由于 AI 模型迭代极快，且 API 计费受缓存折扣、区域节点及推理档位影响，具体性能表现与价格请务必以厂商官方最新页面为准。本站不对因使用该数据造成的任何决策损失负责。';
+  '本站榜单数据定时直接抓取自 LiveBench 2.0（https://livebench.ai/#/）官方公开评测表与成本统计（table.csv / categories.json / cost.csv），并辅以 OpenRouter 公开模型目录校准上下文长度，仅供开发者学习与选型参考。由于 AI 模型持续更新、各家推理档位与区域计费可能变动，具体性能与价格请以厂商官方与 LiveBench 原始页面为准。本站不对因使用该数据造成的任何决策损失负责。';
 
-interface OpenRouterPricing {
-  prompt?: string;
-  completion?: string;
+interface LiveBenchModelMeta {
+  displayName?: string;
+  organization?: string;
+  url?: string;
+  huggingface?: string;
+  openweight?: boolean;
+  effort?: string;
+  reasoner?: boolean;
 }
 
-interface DesignArenaEntry {
-  arena?: string;
-  category?: string;
-  elo?: number;
-  win_rate?: number;
-  rank?: number;
+interface LiveBenchCategories {
+  _overall_weights?: Record<string, number>;
+  [category: string]: string[] | Record<string, number> | undefined;
 }
 
-interface OpenRouterBenchmarks {
-  artificial_analysis?: {
-    intelligence_index?: number | null;
-    coding_index?: number | null;
-    agentic_index?: number | null;
-  };
-  design_arena?: DesignArenaEntry[];
+interface LiveBenchCostRow {
+  model: string;
+  input_price_per_million?: string;
+  output_price_per_million?: string;
+  avg_input_tokens?: string;
+  avg_output_tokens?: string;
 }
 
 interface OpenRouterModelRaw {
   id: string;
-  hugging_face_id?: string | null;
   name: string;
   created?: number;
   context_length?: number;
-  architecture?: {
-    input_modalities?: string[];
-    output_modalities?: string[];
+  hugging_face_id?: string | null;
+  pricing?: {
+    prompt?: string;
+    completion?: string;
   };
-  pricing?: OpenRouterPricing;
-  expiration_date?: string | null;
-  endpoints?: string[];
-  benchmarks?: OpenRouterBenchmarks;
-}
-
-interface LmArenaRowRaw {
-  model_name?: unknown;
-  organization?: unknown;
-  license?: unknown;
-  rating?: unknown;
-  rank?: unknown;
-  category?: unknown;
-  leaderboard_publish_date?: unknown;
-}
-
-interface LmArenaModelScores {
-  modelName: string;
-  license: string | null;
-  publishDate: string | null;
-  overallElo: number | null;
-  overallRank: number | null;
-  codingElo: number | null;
-  mathElo: number | null;
-}
-
-interface LmArenaIndex {
-  byExactNorm: Map<string, LmArenaModelScores>;
-  byLooseNorm: Map<string, LmArenaModelScores>;
-  publishDate: string | null;
-  totalOverallModels: number;
 }
 
 interface NormalizedModel {
   modelSlug: string;
-  dedupeKey: string;
   modelName: string;
   provider: string;
   licenseType: LicenseType;
@@ -134,575 +92,465 @@ interface NormalizedModel {
   codingScore: number | null;
   mathScore: number | null;
   reasoningScore: number | null;
-  lmArenaElo: number | null;
-  lmArenaRank: number | null;
-  benchmarkSourceCount: number;
-  createdAt: number;
   contextWindowK: number;
-  inputPricePer1MUsd: number;
-  outputPricePer1MUsd: number;
+  inputPricePer1MUsd: number | null;
+  outputPricePer1MUsd: number | null;
   blendedPricePer1MUsd: number;
   highlights: string[];
   officialUrl: string;
 }
 
-function clamp(min: number, max: number, value: number): number {
-  return Math.min(max, Math.max(min, value));
+const PROVIDER_NAME_ALIASES: Record<string, string> = {
+  Alibaba: 'Qwen',
+  'Moonshot AI': 'MoonshotAI',
+  'Mistral AI': 'Mistral',
+  'Z.AI': 'Z.ai',
+  'Abacus.AI': 'AbacusAI',
+};
+
+function normalizeProvider(org: string | undefined, fallbackId: string): string {
+  if (org && org.trim()) {
+    const trimmed = org.trim();
+    return PROVIDER_NAME_ALIASES[trimmed] ?? trimmed;
+  }
+  const prefix = fallbackId.split(/[-_]/)[0]?.toLowerCase() ?? '';
+  if (prefix === 'claude') return 'Anthropic';
+  if (prefix === 'gpt') return 'OpenAI';
+  if (prefix === 'gemini' || prefix === 'gemma') return 'Google';
+  if (prefix === 'deepseek') return 'DeepSeek';
+  if (prefix === 'qwen') return 'Qwen';
+  if (prefix === 'glm') return 'Z.ai';
+  if (prefix === 'grok') return 'xAI';
+  if (prefix === 'kimi') return 'MoonshotAI';
+  if (prefix === 'mistral') return 'Mistral';
+  return 'Other';
 }
 
-function normalizeMatchKey(raw: string, stripQualifiers: boolean): string {
-  let text = raw
-    .toLowerCase()
-    .replace(/^[^:]+:\s*/, '')
-    .replace(/\([^)]*\)/g, ' ')
-    .replace(/\b(202\d{5}|20\d{2}-\d{2}-\d{2}|\d{2}-\d{2}|\d{4})\b/g, ' ');
+function roundScore(val: number, decimals = 1): number {
+  const factor = 10 ** decimals;
+  return Math.round(val * factor) / factor;
+}
 
-  if (stripQualifiers) {
-    text = text
-      .replace(/^(amazon|google|meta|openai|anthropic)\s+/i, '')
-      .replace(/\b(17b\s*128e|17b\s*16e)\b/g, ' ')
-      .replace(/\b(mistral\s+small\s+3\s*[.\s]?2)\s+24b\b/g, '$1')
-      .replace(
-        /\b(preview|beta\s*\d*|exp|experimental|reasoning|thinking|instant|instruct|chat|it|open)\b/g,
-        ' '
-      );
+function roundUsd(val: number): number {
+  return Math.round(val * 10000) / 10000;
+}
+
+function parseCsvRows(csvText: string): Record<string, string>[] {
+  const lines = csvText
+    .trim()
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map((h) => h.trim());
+  const rows: Record<string, string>[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(',');
+    const row: Record<string, string> = {};
+    for (let j = 0; j < headers.length; j++) {
+      row[headers[j]] = (values[j] ?? '').trim();
+    }
+    rows.push(row);
   }
-
-  return text.replace(/[^a-z0-9]+/g, ' ').trim();
+  return rows;
 }
 
 /**
- * 过滤真正的路由前缀、纯生图模型与非文本输出噪音，放行 -preview / -exp / 带日期后缀的真实版本。
+ * 从 JS bundle 中提取从某 `{` 开始并严格配对 `}` 的对象字面量文本，
+ * 随后无 eval 地转换为合法 JSON 解析，避免因代码压缩混淆导致解析失稳。
  */
-function isNoiseVariant(model: OpenRouterModelRaw): boolean {
-  const idLower = model.id.toLowerCase();
-  const nameLower = model.name.toLowerCase();
+function extractBalancedObjectAround(js: string, anchorNeedle: string): string | null {
+  const anchorIdx = js.indexOf(anchorNeedle);
+  if (anchorIdx === -1) return null;
 
-  if (idLower.includes(':')) return true;
-  if (idLower.startsWith('openrouter/') || idLower.startsWith('switchpoint/')) return true;
-  if (/\((free|batch)\)/i.test(nameLower)) return true;
-  if (/-image(-mini|-preview)?$/i.test(idLower)) return true;
-
-  if (model.expiration_date) {
-    const expMs = Date.parse(model.expiration_date);
-    if (!Number.isNaN(expMs) && expMs <= Date.now()) return true;
-  }
-
-  const outputModalities = model.architecture?.output_modalities ?? [];
-  if (outputModalities.length > 0 && !outputModalities.includes('text')) return true;
-
-  const endpoints = model.endpoints ?? [];
-  if (endpoints.length > 0 && !endpoints.includes('/api/v1/chat/completions')) return true;
-
-  return false;
-}
-
-/**
- * 生成同型号跨快照的智能去重键：
- * 仅剥离日期后缀（-1017 / -0902 / -20260215 / -02-15）与 -preview / -exp，
- * 使 deepseek-v4.1-flash 与 deepseek-v4.1-flash-1017 归并到同一组并优先保留有跑分数据的版本，
- * 同时保留 v4 与 v4.1、5.1 与 5.2 等真实子代差异。
- */
-function getDedupeModelKey(id: string): string {
-  return id
-    .toLowerCase()
-    .replace(/^~/, '')
-    .replace(/(-(202\d{5}|20\d{2}-\d{2}-\d{2}|\d{2}-\d{2}|\d{4}|preview|exp|experimental))+$/g, '');
-}
-
-function roundUsd(value: number): number {
-  if (value <= 0) return 0;
-  return Number(value.toFixed(value < 0.1 ? 4 : 2));
-}
-
-function cleanDisplayName(rawName: string): string {
-  const idx = rawName.indexOf(':');
-  return idx > 0 ? rawName.slice(idx + 1).trim() : rawName.trim();
-}
-
-function extractProvider(rawId: string, rawName: string): string {
-  const idx = rawName.indexOf(':');
-  if (idx > 0) return rawName.slice(0, idx).trim();
-  return rawId.replace(/^~/, '').split('/')[0] ?? 'Unknown';
-}
-
-function computeDesignArenaAvgElo(entries?: DesignArenaEntry[]): number | null {
-  if (!Array.isArray(entries) || entries.length === 0) return null;
-  const elos = entries
-    .map((entry) => entry.elo)
-    .filter((v): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0);
-  if (elos.length === 0) return null;
-  return Math.round(elos.reduce((sum, v) => sum + v, 0) / elos.length);
-}
-
-function arenaOverallEloTo100(elo: number): number {
-  return clamp(5, 99.5, (elo - 1050) / 5.0);
-}
-
-function arenaSubEloTo100(elo: number): number {
-  return Number(clamp(5, 99.5, (elo - 1050) / 5.2).toFixed(1));
-}
-
-function aaIndexTo100(aaIndex: number): number {
-  return clamp(5, 93.5, 46 + 0.72 * aaIndex);
-}
-
-function designArenaEloTo100(daElo: number): number {
-  return clamp(20, 60, (daElo - 750) / 10);
-}
-
-/**
- * 统一综合能力评分（0–100 量纲）：
- * - 拥有 LMArena Overall Elo 时直接按 LMArena Elo 单调映射（避免旧模型因缺失 AA 指标而反超新模型）；
- * - 暂未收录进 LMArena 但拥有 AA Intelligence Index 的新模型，按稳健回归曲线校准（封顶 93.5，不轻易反超 LMArena 头部榜首）；
- * - 仅拥有 AA Coding/Agentic 或 DesignArena Elo 时，按保守经验回归映射到中低分区间（AA 子项封顶 66、纯 DA 封顶 60）。
- */
-function computeUnifiedScores(params: {
-  lmArena: LmArenaModelScores | null;
-  intelligenceIndex: number | null;
-  codingIndex: number | null;
-  agenticIndex: number | null;
-  designArenaElo: number | null;
-}): {
-  overallScore: number;
-  codingScore: number | null;
-  mathScore: number | null;
-  reasoningScore: number | null;
-  benchmarkSourceCount: number;
-} | null {
-  const lmOverallElo = params.lmArena?.overallElo ?? null;
-  const lmCodingElo = params.lmArena?.codingElo ?? null;
-  const lmMathElo = params.lmArena?.mathElo ?? null;
-
-  const arenaScore = lmOverallElo !== null ? arenaOverallEloTo100(lmOverallElo) : null;
-  const aaScore =
-    params.intelligenceIndex !== null ? aaIndexTo100(params.intelligenceIndex) : null;
-
-  let overallScore: number | null = null;
-  if (arenaScore !== null) {
-    overallScore = arenaScore;
-  } else if (aaScore !== null) {
-    overallScore = aaScore;
-  } else {
-    let aaSub: number | null = null;
-    if (params.agenticIndex !== null && params.codingIndex !== null) {
-      aaSub = Math.min(66, 38 + 0.24 * params.codingIndex + 0.14 * params.agenticIndex);
-    } else if (params.codingIndex !== null) {
-      aaSub = Math.min(66, 36 + 0.3 * params.codingIndex);
-    } else if (params.agenticIndex !== null) {
-      aaSub = Math.min(64, 36 + 0.35 * params.agenticIndex);
+  // 向左回溯找到外层词典对象的起始 `{`
+  let scan = anchorIdx - 1;
+  let innerDepth = 0;
+  let objStart = -1;
+  while (scan >= 0) {
+    const ch = js[scan];
+    if (ch === '}') innerDepth++;
+    else if (ch === '{') {
+      if (innerDepth === 0) {
+        objStart = scan;
+        break;
+      }
+      innerDepth--;
     }
+    scan--;
+  }
+  if (objStart === -1) return null;
 
-    const daSub =
-      params.designArenaElo !== null ? designArenaEloTo100(params.designArenaElo) : null;
-
-    if (aaSub !== null && daSub !== null) {
-      overallScore = Math.min(66, 0.65 * aaSub + 0.35 * daSub);
-    } else if (aaSub !== null) {
-      overallScore = aaSub;
-    } else if (daSub !== null) {
-      overallScore = daSub;
+  let depth = 0;
+  let inStr = false;
+  let quoteChar = '';
+  let escaped = false;
+  for (let i = objStart; i < js.length; i++) {
+    const ch = js[i];
+    if (inStr) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === quoteChar) {
+        inStr = false;
+      }
+      continue;
     }
-  }
-
-  if (overallScore === null) return null;
-
-  const codingScore =
-    lmCodingElo !== null
-      ? arenaSubEloTo100(lmCodingElo)
-      : params.codingIndex !== null
-        ? Number(clamp(5, 96, 46 + 0.52 * params.codingIndex).toFixed(1))
-        : null;
-
-  const mathScore = lmMathElo !== null ? arenaSubEloTo100(lmMathElo) : null;
-  const reasoningScore =
-    params.agenticIndex !== null ? Number(params.agenticIndex.toFixed(1)) : null;
-
-  const benchmarkSourceCount =
-    (lmOverallElo !== null ? 2 : 0) +
-    (params.intelligenceIndex !== null ? 2 : 0) +
-    (params.codingIndex !== null || params.agenticIndex !== null ? 1 : 0) +
-    (params.designArenaElo !== null ? 1 : 0);
-
-  return {
-    overallScore: Number(overallScore.toFixed(1)),
-    codingScore,
-    mathScore,
-    reasoningScore,
-    benchmarkSourceCount,
-  };
-}
-
-function buildHighlights(params: {
-  lmArenaElo: number | null;
-  intelligenceIndex: number | null;
-  contextK: number;
-  codingScore: number | null;
-  designArenaElo: number | null;
-  inputModalities: string[];
-  licenseType: LicenseType;
-  blendedPrice: number;
-}): string[] {
-  const tags: string[] = [];
-
-  if (params.lmArenaElo !== null) {
-    tags.push(`Arena:${Math.round(params.lmArenaElo)}`);
-  } else if (params.intelligenceIndex !== null) {
-    tags.push(`AA综合:${Math.round(params.intelligenceIndex)}`);
-  } else if (params.designArenaElo !== null) {
-    tags.push(`DA:${params.designArenaElo}`);
-  } else {
-    tags.push('子项估算');
-  }
-
-  if (params.contextK >= 1000) {
-    tags.push('1M+上下文');
-  } else if (params.contextK >= 200) {
-    tags.push('超长上下文');
-  }
-
-  if (params.codingScore !== null && params.codingScore >= 80) {
-    tags.push('代码强项');
-  }
-
-  if (params.licenseType === 'open_weights') {
-    tags.push('开源权重');
-  }
-
-  if (
-    params.inputModalities.includes('image') ||
-    params.inputModalities.includes('video')
-  ) {
-    tags.push('多模态');
-  }
-
-  if (params.blendedPrice > 0 && params.blendedPrice <= 0.5) {
-    tags.push('超低成本');
-  }
-
-  return Array.from(new Set(tags)).slice(0, 3);
-}
-
-async function fetchLatestLmArenaParquetBuffer(): Promise<ArrayBuffer> {
-  for (const directUrl of LMARENA_PARQUET_MIRRORS) {
-    try {
-      const res = await fetch(directUrl, {
-        headers: { 'User-Agent': 'ai-hub-leaderboard-sync/1.0' },
-        signal: AbortSignal.timeout(12000),
-      });
-      if (res.ok) {
-        return await res.arrayBuffer();
-      }
-    } catch {
-      // 尝试下一镜像或动态文件名解析
-    }
-  }
-
-  for (const treeUrl of LMARENA_TREE_MIRRORS) {
-    try {
-      const treeRes = await fetch(treeUrl, {
-        headers: { 'User-Agent': 'ai-hub-leaderboard-sync/1.0' },
-        signal: AbortSignal.timeout(10000),
-      });
-      if (!treeRes.ok) continue;
-      const entries = (await treeRes.json()) as { path?: string }[];
-      const latestPath = entries.find((e) => e.path?.includes('latest-') && e.path.endsWith('.parquet'))?.path;
-      if (!latestPath) continue;
-
-      const baseHost = treeUrl.startsWith('https://huggingface.co')
-        ? 'https://huggingface.co'
-        : 'https://hf-mirror.com';
-      const fileRes = await fetch(
-        `${baseHost}/datasets/lmarena-ai/leaderboard-dataset/resolve/main/${latestPath}`,
-        {
-          headers: { 'User-Agent': 'ai-hub-leaderboard-sync/1.0' },
-          signal: AbortSignal.timeout(12000),
-        }
-      );
-      if (fileRes.ok) {
-        return await fileRes.arrayBuffer();
-      }
-    } catch {
-      // 继续尝试兜底镜像
-    }
-  }
-
-  throw new Error('所有 LMArena Hugging Face 数据集镜像均请求超时或不可用');
-}
-
-function upsertLmArenaEntry(
-  map: Map<string, LmArenaModelScores>,
-  key: string,
-  incoming: LmArenaModelScores
-) {
-  if (!key) return;
-  const existing = map.get(key);
-  if (!existing) {
-    map.set(key, { ...incoming });
-    return;
-  }
-
-  if (
-    incoming.overallElo !== null &&
-    (existing.overallElo === null || incoming.overallElo > existing.overallElo)
-  ) {
-    existing.overallElo = incoming.overallElo;
-    existing.overallRank = incoming.overallRank;
-    existing.modelName = incoming.modelName;
-    if (incoming.license) existing.license = incoming.license;
-  }
-  if (
-    incoming.codingElo !== null &&
-    (existing.codingElo === null || incoming.codingElo > existing.codingElo)
-  ) {
-    existing.codingElo = incoming.codingElo;
-  }
-  if (
-    incoming.mathElo !== null &&
-    (existing.mathElo === null || incoming.mathElo > existing.mathElo)
-  ) {
-    existing.mathElo = incoming.mathElo;
-  }
-}
-
-async function fetchLmArenaIndex(): Promise<LmArenaIndex | null> {
-  try {
-    const buffer = await fetchLatestLmArenaParquetBuffer();
-    const rows = (await parquetReadObjects({
-      file: buffer,
-      compressors,
-    })) as LmArenaRowRaw[];
-
-    const byModelRaw = new Map<string, LmArenaModelScores>();
-    let publishDate: string | null = null;
-    let totalOverallModels = 0;
-
-    for (const row of rows) {
-      const category = typeof row.category === 'string' ? row.category : '';
-      if (category !== 'overall' && category !== 'coding' && category !== 'math') {
-        continue;
-      }
-
-      const modelName = typeof row.model_name === 'string' ? row.model_name.trim() : '';
-      const rating = Number(row.rating);
-      const rank = Number(row.rank);
-      if (!modelName || !Number.isFinite(rating) || rating <= 0) continue;
-
-      if (!publishDate && typeof row.leaderboard_publish_date === 'string') {
-        publishDate = row.leaderboard_publish_date;
-      }
-
-      let record = byModelRaw.get(modelName);
-      if (!record) {
-        record = {
-          modelName,
-          license: typeof row.license === 'string' ? row.license : null,
-          publishDate: typeof row.leaderboard_publish_date === 'string' ? row.leaderboard_publish_date : null,
-          overallElo: null,
-          overallRank: null,
-          codingElo: null,
-          mathElo: null,
-        };
-        byModelRaw.set(modelName, record);
-      }
-
-      if (category === 'overall') {
-        totalOverallModels++;
-        record.overallElo = rating;
-        record.overallRank = Number.isFinite(rank) ? rank : null;
-      } else if (category === 'coding') {
-        record.codingElo = rating;
-      } else if (category === 'math') {
-        record.mathElo = rating;
+    if (ch === '"' || ch === "'") {
+      inStr = true;
+      quoteChar = ch;
+    } else if (ch === '{') {
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        return js.slice(objStart, i + 1);
       }
     }
-
-    const byExactNorm = new Map<string, LmArenaModelScores>();
-    const byLooseNorm = new Map<string, LmArenaModelScores>();
-
-    for (const entry of byModelRaw.values()) {
-      upsertLmArenaEntry(byExactNorm, normalizeMatchKey(entry.modelName, false), entry);
-      upsertLmArenaEntry(byLooseNorm, normalizeMatchKey(entry.modelName, true), entry);
-    }
-
-    console.log(
-      `📊 已载入 LMArena 官方数据集 (发布日: ${publishDate ?? '未知'}, Overall: ${totalOverallModels} 条)`
-    );
-
-    return {
-      byExactNorm,
-      byLooseNorm,
-      publishDate,
-      totalOverallModels,
-    };
-  } catch (err) {
-    console.warn(
-      '⚠️ 拉取 LMArena 官方数据集失败，将降级仅使用 OpenRouter 内置评测:',
-      err instanceof Error ? err.message : String(err)
-    );
-    return null;
-  }
-}
-
-function matchLmArenaModel(
-  lmIndex: LmArenaIndex | null,
-  rawId: string,
-  rawName: string
-): LmArenaModelScores | null {
-  if (!lmIndex) return null;
-  const slugTail = rawId.replace(/^~/, '').split('/')[1] ?? rawId;
-  const candidates = [cleanDisplayName(rawName), slugTail];
-
-  for (const text of candidates) {
-    const exact = lmIndex.byExactNorm.get(normalizeMatchKey(text, false));
-    if (exact) return exact;
-  }
-  for (const text of candidates) {
-    const loose = lmIndex.byLooseNorm.get(normalizeMatchKey(text, true));
-    if (loose) return loose;
   }
   return null;
 }
 
-/**
- * 智能去重：同型号通配版（如 deepseek-v4.1-flash）与日期版（如 deepseek-v4.1-flash-1017）
- * 归并到同一 dedupeKey 时，优先保留评测数据更完整、综合分更高且更新的版本。
- */
-function deduplicateSmartVariants(models: NormalizedModel[]): NormalizedModel[] {
-  const bestByKey = new Map<string, NormalizedModel>();
-
-  for (const model of models) {
-    const existing = bestByKey.get(model.dedupeKey);
-    if (!existing) {
-      bestByKey.set(model.dedupeKey, model);
-      continue;
-    }
-
-    const isBetter =
-      model.benchmarkSourceCount !== existing.benchmarkSourceCount
-        ? model.benchmarkSourceCount > existing.benchmarkSourceCount
-        : model.overallScore !== existing.overallScore
-          ? model.overallScore > existing.overallScore
-          : model.createdAt > existing.createdAt;
-
-    if (isBetter) {
-      bestByKey.set(model.dedupeKey, model);
+function parseJsObjectLiteralToJson<T>(raw: string): T {
+  let out = '';
+  let i = 0;
+  while (i < raw.length) {
+    const ch = raw[i];
+    if (ch === '"') {
+      let j = i + 1;
+      while (j < raw.length) {
+        if (raw[j] === '\\') {
+          j += 2;
+          continue;
+        }
+        if (raw[j] === '"') {
+          j++;
+          break;
+        }
+        j++;
+      }
+      out += raw.slice(i, j);
+      i = j;
+    } else if (raw.slice(i, i + 2) === '!0') {
+      out += 'true';
+      i += 2;
+    } else if (raw.slice(i, i + 2) === '!1') {
+      out += 'false';
+      i += 2;
+    } else if (/[A-Za-z_$]/.test(ch) && (out.endsWith('{') || out.endsWith(','))) {
+      let j = i;
+      while (j < raw.length && /[A-Za-z0-9_$]/.test(raw[j])) j++;
+      if (raw[j] === ':') {
+        out += `"${raw.slice(i, j)}"`;
+        i = j;
+      } else {
+        out += ch;
+        i++;
+      }
+    } else {
+      out += ch;
+      i++;
     }
   }
-
-  return Array.from(bestByKey.values());
+  return JSON.parse(out) as T;
 }
 
-function inferOpenSource(raw: OpenRouterModelRaw, lmArena: LmArenaModelScores | null): {
-  isOpen: boolean;
-  label: string;
-} {
-  if (raw.hugging_face_id) {
-    return { isOpen: true, label: 'Open Weights' };
+function extractReleaseIds(js: string): string[] {
+  const candidates = new Set<string>();
+  const arrayMatches = js.matchAll(/\[([^\]]*"202[5-9]\d{4}"[^\]]*)\]/g);
+  for (const m of arrayMatches) {
+    for (const item of m[1].matchAll(/"(202[5-9]\d{4})"/g)) {
+      candidates.add(item[1]);
+    }
   }
-  const lmLic = lmArena?.license?.trim();
-  if (lmLic && !/^proprietary$/i.test(lmLic)) {
-    return { isOpen: true, label: lmLic };
-  }
-  return { isOpen: false, label: 'Proprietary' };
+  return Array.from(candidates).sort((a, b) => b.localeCompare(a));
 }
 
-async function fetchMergedModels(lmIndex: LmArenaIndex | null): Promise<NormalizedModel[]> {
-  const response = await fetch(OPENROUTER_MODELS_URL, {
-    headers: {
-      Accept: 'application/json',
-      'User-Agent': 'ai-hub-leaderboard-sync/1.0',
-    },
+function formatReleaseDate(releaseId: string): string {
+  if (/^\d{8}$/.test(releaseId)) {
+    return `${releaseId.slice(0, 4)}-${releaseId.slice(4, 6)}-${releaseId.slice(6, 8)}`;
+  }
+  return releaseId;
+}
+
+function matchOpenRouterContext(
+  liveBenchId: string,
+  orModels: OpenRouterModelRaw[]
+): OpenRouterModelRaw | null {
+  const target = liveBenchId.toLowerCase();
+  const nonBatch = orModels.filter((m) => !m.id.includes(':batch'));
+
+  // 1. 精确匹配 OpenRouter ID 尾段（去掉厂商前缀与免费标识）
+  for (const m of nonBatch) {
+    const slug = m.id.replace(/^~/, '').split('/')[1]?.replace(/:free$/, '').toLowerCase();
+    if (slug === target) return m;
+  }
+
+  // 2. 常见命名尾缀与日期版本对齐（排除 :batch、避免跨版本号误匹配）
+  const aliases = [
+    `${target}-it`,
+    `${target}-pro`,
+    `${target}-prime`,
+    `${target}-contributor`,
+    `${target}-2-small`,
+    target.replace(/-1\.0$/, ''),
+    `${target}-instruct`,
+  ];
+  for (const alias of aliases) {
+    for (const m of nonBatch) {
+      const slug = m.id.replace(/^~/, '').split('/')[1]?.replace(/:free$/, '').toLowerCase();
+      if (slug === alias) return m;
+    }
+  }
+
+  // 3. 日期后缀（如 qwen3.8-max -> qwen3.8-max-0902）及词序置换（nemotron-super-vl-3.5）
+  for (const m of nonBatch) {
+    const slug = m.id.replace(/^~/, '').split('/')[1]?.replace(/:free$/, '').toLowerCase();
+    if (!slug) continue;
+    if (slug.startsWith(`${target}-`) && /^\d{4}$/.test(slug.slice(target.length + 1))) {
+      return m;
+    }
+  }
+
+  const targetTokens = target.split('-').filter(Boolean).sort().join('|');
+  for (const m of nonBatch) {
+    const slug = m.id.replace(/^~/, '').split('/')[1]?.replace(/:free$/, '').toLowerCase();
+    if (!slug) continue;
+    if (slug.split('-').filter(Boolean).sort().join('|') === targetTokens) {
+      return m;
+    }
+  }
+
+  return null;
+}
+
+async function fetchOpenRouterCatalog(): Promise<OpenRouterModelRaw[]> {
+  try {
+    const res = await fetch(OPENROUTER_MODELS_URL, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'ai-hub-leaderboard-sync/2.0',
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) {
+      console.warn(`⚠️ OpenRouter 目录返回 HTTP ${res.status}，将跳过上下文补全`);
+      return [];
+    }
+    const json = (await res.json()) as { data?: OpenRouterModelRaw[] };
+    return json.data ?? [];
+  } catch (err) {
+    console.warn('⚠️ 请求 OpenRouter 目录异常，将使用默认上下文:', err);
+    return [];
+  }
+}
+
+async function fetchLiveBenchData(): Promise<{
+  releaseId: string;
+  releaseDate: string;
+  models: NormalizedModel[];
+}> {
+  const htmlRes = await fetch(LIVEBENCH_BASE_URL, {
+    headers: { 'User-Agent': 'ai-hub-leaderboard-sync/2.0' },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!htmlRes.ok) {
+    throw new Error(`访问 LiveBench 首页失败: HTTP ${htmlRes.status}`);
+  }
+  const html = await htmlRes.text();
+  const scriptMatch = html.match(/src=["']([^"']*static\/js\/main\.[^"']+\.js)["']/);
+  if (!scriptMatch?.[1]) {
+    throw new Error('未能在 LiveBench 页面中定位前端主脚本 (main.*.js)');
+  }
+
+  const bundleUrl = new URL(scriptMatch[1], LIVEBENCH_BASE_URL).toString();
+  const jsRes = await fetch(bundleUrl, {
+    headers: { 'User-Agent': 'ai-hub-leaderboard-sync/2.0' },
     signal: AbortSignal.timeout(20000),
   });
+  if (!jsRes.ok) {
+    throw new Error(`拉取 LiveBench 脚本失败 (${bundleUrl}): HTTP ${jsRes.status}`);
+  }
+  const js = await jsRes.text();
 
-  if (!response.ok) {
-    throw new Error(`OpenRouter API 请求失败: HTTP ${response.status} ${response.statusText}`);
+  const releases = extractReleaseIds(js);
+  if (releases.length === 0) {
+    throw new Error('未能在 LiveBench 脚本中解析到版本号 (YYYYMMDD)');
   }
 
-  const payload = (await response.json()) as { data?: OpenRouterModelRaw[] };
-  const rawModels = payload.data ?? [];
-  const candidates: NormalizedModel[] = [];
+  const metaObjRaw =
+    extractBalancedObjectAround(js, '"claude-opus-5.5":{displayName:') ??
+    extractBalancedObjectAround(js, '"gemini-4-carbon":{displayName:') ??
+    extractBalancedObjectAround(js, '"gpt-6-astra":{displayName:');
+  if (!metaObjRaw) {
+    throw new Error('未能在 LiveBench 脚本中定位模型元数据字典');
+  }
+  const modelMetaMap = parseJsObjectLiteralToJson<Record<string, LiveBenchModelMeta>>(metaObjRaw);
 
-  for (const m of rawModels) {
-    if (isNoiseVariant(m)) continue;
+  // 从最新版本往下探测可读取的 data/<releaseId>/table.csv
+  let activeRelease = '';
+  let tableText = '';
+  let catsJson: LiveBenchCategories | null = null;
+  let costText = '';
 
-    const promptPerToken = Number(m.pricing?.prompt);
-    const completionPerToken = Number(m.pricing?.completion);
-    if (
-      !Number.isFinite(promptPerToken) ||
-      !Number.isFinite(completionPerToken) ||
-      promptPerToken < 0 ||
-      completionPerToken < 0
-    ) {
-      continue;
+  for (const rel of releases) {
+    const baseDataUrl = new URL(`data/${rel}/`, LIVEBENCH_BASE_URL).toString();
+    const [tRes, cRes, pRes] = await Promise.all([
+      fetch(`${baseDataUrl}table.csv`, { signal: AbortSignal.timeout(15000) }),
+      fetch(`${baseDataUrl}categories.json`, { signal: AbortSignal.timeout(15000) }),
+      fetch(`${baseDataUrl}cost.csv`, { signal: AbortSignal.timeout(15000) }).catch(() => null),
+    ]);
+    if (tRes.ok && cRes.ok) {
+      activeRelease = rel;
+      tableText = await tRes.text();
+      catsJson = (await cRes.json()) as LiveBenchCategories;
+      costText = pRes && pRes.ok ? await pRes.text() : '';
+      break;
+    }
+  }
+
+  if (!activeRelease || !tableText || !catsJson) {
+    throw new Error(`无法拉取 LiveBench 发布版数据 (${releases.join(', ')})`);
+  }
+
+  const orModels = await fetchOpenRouterCatalog();
+  const tableRows = parseCsvRows(tableText);
+  const costRows = costText ? parseCsvRows(costText) : [];
+  const costMap = new Map<string, LiveBenchCostRow>();
+  for (const c of costRows) {
+    if (c.model) costMap.set(c.model, c as unknown as LiveBenchCostRow);
+  }
+
+  const weights = catsJson._overall_weights ?? {};
+  const suiteEntries = Object.entries(catsJson).filter(
+    ([k, v]) => k !== '_overall_weights' && Array.isArray(v)
+  ) as [string, string[]][];
+
+  const models: NormalizedModel[] = [];
+  for (const row of tableRows) {
+    const modelId = row.model;
+    if (!modelId) continue;
+
+    let weightedSum = 0;
+    let totalWeight = 0;
+    const catScores = new Map<string, number>();
+
+    for (const [catName, cols] of suiteEntries) {
+      const nums = cols
+        .map((col) => {
+          const rawVal = row[col];
+          if (!rawVal || rawVal === '-') return NaN;
+          return Number(rawVal);
+        })
+        .filter((n) => Number.isFinite(n));
+
+      if (nums.length > 0) {
+        const avg = nums.reduce((acc, v) => acc + v, 0) / nums.length;
+        catScores.set(catName, avg);
+        const w = Number(weights[catName] ?? 1);
+        const effWeight = Number.isFinite(w) && w > 0 ? w : 1;
+        weightedSum += avg * effWeight;
+        totalWeight += effWeight;
+      }
     }
 
-    const lmArena = matchLmArenaModel(lmIndex, m.id, m.name);
-    const aa = m.benchmarks?.artificial_analysis;
-    const intelligenceIndex =
-      typeof aa?.intelligence_index === 'number' && Number.isFinite(aa.intelligence_index)
-        ? aa.intelligence_index
-        : null;
-    const codingIndex =
-      typeof aa?.coding_index === 'number' && Number.isFinite(aa.coding_index)
-        ? aa.coding_index
-        : null;
-    const agenticIndex =
-      typeof aa?.agentic_index === 'number' && Number.isFinite(aa.agentic_index)
-        ? aa.agentic_index
-        : null;
-    const designArenaElo = computeDesignArenaAvgElo(m.benchmarks?.design_arena);
+    if (totalWeight <= 0) continue;
 
-    const unified = computeUnifiedScores({
-      lmArena,
-      intelligenceIndex,
-      codingIndex,
-      agenticIndex,
-      designArenaElo,
-    });
-    if (!unified) continue;
+    const overallScore = roundScore(weightedSum / totalWeight, 2);
+    const codingRaw = catScores.get('Coding');
+    const reasoningRaw = catScores.get('Reasoning');
+    const longAgenticRaw = catScores.get('Long Agentic');
+    const browserRaw = catScores.get('Browser');
+    const researchRaw = catScores.get('Research');
+    const designRaw = catScores.get('Design');
 
-    const inputPer1M = roundUsd(promptPerToken * 1_000_000);
-    const outputPer1M = roundUsd(completionPerToken * 1_000_000);
-    const blendedPrice = (inputPer1M + 3 * outputPer1M) / 4;
-    const contextK = Math.max(1, Math.round((m.context_length ?? 0) / 1000));
-    const openInfo = inferOpenSource(m, lmArena);
+    const meta = modelMetaMap[modelId] ?? {};
+    const orMatch = matchOpenRouterContext(modelId, orModels);
+    const costRow = costMap.get(modelId);
 
-    candidates.push({
-      modelSlug: m.id.replace(/^~/, ''),
-      dedupeKey: getDedupeModelKey(m.id),
-      modelName: cleanDisplayName(m.name),
-      provider: extractProvider(m.id, m.name),
-      licenseType: openInfo.isOpen ? 'open_weights' : 'proprietary',
-      licenseLabel: openInfo.label,
-      overallScore: unified.overallScore,
-      codingScore: unified.codingScore,
-      mathScore: unified.mathScore,
-      reasoningScore: unified.reasoningScore,
-      lmArenaElo: lmArena?.overallElo ? Math.round(lmArena.overallElo) : null,
-      lmArenaRank: lmArena?.overallRank ?? null,
-      benchmarkSourceCount: unified.benchmarkSourceCount,
-      createdAt: m.created ?? 0,
-      contextWindowK: contextK,
-      inputPricePer1MUsd: inputPer1M,
-      outputPricePer1MUsd: outputPer1M,
+    let inputPrice = costRow?.input_price_per_million
+      ? Number(costRow.input_price_per_million)
+      : NaN;
+    let outputPrice = costRow?.output_price_per_million
+      ? Number(costRow.output_price_per_million)
+      : NaN;
+
+    if ((!Number.isFinite(inputPrice) || !Number.isFinite(outputPrice)) && orMatch?.pricing) {
+      const orPrompt = Number(orMatch.pricing.prompt);
+      const orComp = Number(orMatch.pricing.completion);
+      if (Number.isFinite(orPrompt) && Number.isFinite(orComp)) {
+        inputPrice = roundUsd(orPrompt * 1_000_000);
+        outputPrice = roundUsd(orComp * 1_000_000);
+      }
+    }
+
+    const validInput = Number.isFinite(inputPrice) && inputPrice >= 0 ? roundUsd(inputPrice) : null;
+    const validOutput =
+      Number.isFinite(outputPrice) && outputPrice >= 0 ? roundUsd(outputPrice) : null;
+    const blendedPrice =
+      validInput !== null && validOutput !== null ? (validInput + 3 * validOutput) / 4 : 0;
+
+    const contextWindowK = orMatch?.context_length
+      ? Math.max(1, Math.round(orMatch.context_length / 1000))
+      : 128;
+
+    const isOpenWeights = Boolean(meta.openweight || orMatch?.hugging_face_id);
+    const licenseType: LicenseType = isOpenWeights ? 'open_weights' : 'proprietary';
+    const licenseLabel = isOpenWeights ? '开源权重' : '闭源商用';
+
+    const provider = normalizeProvider(meta.organization, modelId);
+    const displayName = meta.displayName?.replace(/\s*\(xhigh\)$/i, '').trim() || modelId;
+
+    const highlights: string[] = [`LB2:${overallScore.toFixed(1)}`];
+    if (longAgenticRaw !== undefined) {
+      highlights.push(`长程Agent:${longAgenticRaw.toFixed(1)}`);
+    }
+    const extraHighlightCandidates = [
+      researchRaw !== undefined ? { label: '科研', val: researchRaw } : null,
+      browserRaw !== undefined ? { label: '浏览器', val: browserRaw } : null,
+      designRaw !== undefined ? { label: '设计', val: designRaw } : null,
+    ].filter((x): x is { label: string; val: number } => x !== null);
+    if (extraHighlightCandidates.length > 0) {
+      extraHighlightCandidates.sort((a, b) => b.val - a.val);
+      const best = extraHighlightCandidates[0];
+      highlights.push(`${best.label}:${best.val.toFixed(1)}`);
+    }
+    if (contextWindowK >= 1000) {
+      highlights.push('1M+上下文');
+    } else if (isOpenWeights) {
+      highlights.push('开源权重');
+    }
+
+    const modelSlug = orMatch?.id.replace(/^~/, '') || `livebench/${modelId}`;
+    const officialUrl =
+      meta.url ||
+      meta.huggingface ||
+      (orMatch ? `https://openrouter.ai/${orMatch.id.replace(/^~/, '')}` : LIVEBENCH_BASE_URL);
+
+    models.push({
+      modelSlug,
+      modelName: displayName,
+      provider,
+      licenseType,
+      licenseLabel,
+      overallScore,
+      codingScore: codingRaw !== undefined ? roundScore(codingRaw, 1) : null,
+      mathScore: null,
+      reasoningScore: reasoningRaw !== undefined ? roundScore(reasoningRaw, 1) : null,
+      contextWindowK,
+      inputPricePer1MUsd: validInput,
+      outputPricePer1MUsd: validOutput,
       blendedPricePer1MUsd: blendedPrice,
-      highlights: buildHighlights({
-        lmArenaElo: lmArena?.overallElo ?? null,
-        intelligenceIndex,
-        contextK,
-        codingScore: unified.codingScore,
-        designArenaElo,
-        inputModalities: m.architecture?.input_modalities ?? [],
-        licenseType: openInfo.isOpen ? 'open_weights' : 'proprietary',
-        blendedPrice,
-      }),
-      officialUrl: `https://openrouter.ai/${m.id.replace(/^~/, '')}`,
+      highlights,
+      officialUrl,
     });
   }
 
-  return deduplicateSmartVariants(candidates);
+  return {
+    releaseId: activeRelease,
+    releaseDate: formatReleaseDate(activeRelease),
+    models,
+  };
 }
 
 async function loadPreviousRankMap(): Promise<
@@ -754,38 +602,29 @@ interface BoardSpec {
 
 async function main() {
   const startedAt = new Date();
-  console.log('🚀 开始从 LMArena 官方数据集 + OpenRouter 同步全量最新榜单...');
+  console.log('🚀 开始从 LiveBench 2.0 (https://livebench.ai/#/) 抓取最新 AI 模型榜单...');
 
   try {
-    const lmIndex = await fetchLmArenaIndex();
-    const allModels = await fetchMergedModels(lmIndex);
+    const { releaseId, releaseDate, models: allModels } = await fetchLiveBenchData();
+    console.log(
+      `📊 已载入 LiveBench 2.0 官方数据集 (发布版: ${releaseId} / ${releaseDate}, 有效模型: ${allModels.length} 款)`
+    );
 
-    if (allModels.length < 30) {
+    if (allModels.length < 15) {
       throw new Error(`有效基准模型数量异常过少 (${allModels.length})，中止覆盖以保护线上快照`);
     }
 
-    const overallModels = [...allModels]
-      .sort((a, b) => {
-        if (b.overallScore !== a.overallScore) return b.overallScore - a.overallScore;
-        if ((b.lmArenaElo ?? 0) !== (a.lmArenaElo ?? 0)) {
-          return (b.lmArenaElo ?? 0) - (a.lmArenaElo ?? 0);
-        }
-        return b.createdAt - a.createdAt;
-      })
-      .slice(0, 250);
+    const overallModels = [...allModels].sort((a, b) => b.overallScore - a.overallScore);
 
-    const openSourceModels = overallModels
-      .filter((m) => m.licenseType === 'open_weights')
-      .slice(0, 250);
+    const openSourceModels = overallModels.filter((m) => m.licenseType === 'open_weights');
 
     const apiValueModels = [...allModels]
-      .filter((m) => m.overallScore >= 55 && m.blendedPricePer1MUsd > 0)
+      .filter((m) => m.overallScore >= 45 && m.blendedPricePer1MUsd > 0)
       .sort((a, b) => {
         const valueA = a.overallScore / Math.cbrt(a.blendedPricePer1MUsd);
         const valueB = b.overallScore / Math.cbrt(b.blendedPricePer1MUsd);
         return valueB - valueA;
-      })
-      .slice(0, 250);
+      });
 
     const boards: BoardSpec[] = [
       {
@@ -793,7 +632,7 @@ async function main() {
         title: 'AI 大模型综合能力榜',
         shortLabel: '综合能力',
         description:
-          '融合 LMArena 官方最新盲测 Elo（综合/代码/数学）与 OpenRouter AA / DesignArena 指标的全量旗舰榜。',
+          '直连 LiveBench 2.0 无污染长程基准，覆盖 Long Agentic、编程、复杂推理、浏览器与科研设计七维实测。',
         models: overallModels,
       },
       {
@@ -801,7 +640,7 @@ async function main() {
         title: '开源大模型能力榜',
         shortLabel: '开源模型',
         description:
-          '覆盖 Hugging Face 与 LMArena 认证开源权重模型（DeepSeek / Qwen / Llama / GLM / Kimi 等）及 API 成本。',
+          '筛选 LiveBench 2.0 认证的开源权重模型（DeepSeek / Qwen / GLM / Kimi / Mistral / Gemma 等）及实测成本。',
         models: openSourceModels,
       },
       {
@@ -809,14 +648,13 @@ async function main() {
         title: 'API 性价比排行榜',
         shortLabel: 'API 性价比',
         description:
-          '基于融合综合分与 1:3 输入输出加权单价排序，全面对比高性价比主力模型。',
+          '结合 LiveBench 2.0 真实综合分与官方 cost.csv 1:3 加权输入输出单价，评估长程任务性价比。',
         models: apiValueModels,
       },
     ];
 
     const prevRankMap = await loadPreviousRankMap();
     const snapshotAt = new Date().toISOString();
-    const arenaTag = lmIndex?.publishDate ? ` (${lmIndex.publishDate})` : '';
     let totalUpserted = 0;
 
     for (const board of boards) {
@@ -829,8 +667,8 @@ async function main() {
           title: board.title,
           short_label: board.shortLabel,
           description: board.description,
-          source_name: `LMArena 官方数据集${arenaTag} · OpenRouter & AA`,
-          source_url: 'https://arena.ai/leaderboard',
+          source_name: `LiveBench 2.0 (${releaseDate}) · OpenRouter 上下文`,
+          source_url: LIVEBENCH_BASE_URL,
           is_mock_data: false,
           methodology_note: METHODOLOGY_NOTES[board.category],
           disclaimer: OFFICIAL_DISCLAIMER,
@@ -906,11 +744,8 @@ async function main() {
       }
 
       totalUpserted += modelRows.length;
-      const deepseekCount = board.models.filter((m) =>
-        m.modelSlug.toLowerCase().includes('deepseek')
-      ).length;
       console.log(
-        `✅ [${board.category}] 已激活新快照 (${modelRows.length} 款，含 DeepSeek ${deepseekCount} 款)，Top 5: ${board.models
+        `✅ [${board.category}] 已激活新快照 (${modelRows.length} 款)，Top 5: ${board.models
           .slice(0, 5)
           .map((m) => `${m.modelName}(${m.overallScore})`)
           .join(' / ')}`
@@ -934,7 +769,7 @@ async function main() {
     }
 
     console.log(
-      `\n🎉 LMArena + OpenRouter 融合同步完成！去重后共收录 ${allModels.length} 款模型，三大榜单累计写入 ${totalUpserted} 条记录。`
+      `\n🎉 LiveBench 2.0 同步完成！共收录 ${allModels.length} 款参评模型，三大榜单累计写入 ${totalUpserted} 条记录。`
     );
   } catch (err) {
     const finishedAt = new Date();
@@ -951,10 +786,10 @@ async function main() {
         duration_ms: finishedAt.getTime() - startedAt.getTime(),
       });
     } catch {
-      // 忽略写入失败审计日志时的二次网络异常，确保保留主报错
+      // 忽略写入失败审计日志时的二次网络异常
     }
 
-    console.error('❌ 融合同步失败:', message);
+    console.error('❌ LiveBench 2.0 同步失败:', message);
     process.exit(1);
   }
 }

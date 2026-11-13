@@ -10,6 +10,7 @@ export type LeaderboardSortKey =
   | 'overallScore'
   | 'codingScore'
   | 'mathScore'
+  | 'reasoningScore'
   | 'contextWindow'
   | 'inputPricePer1M'
   | 'outputPricePer1M'

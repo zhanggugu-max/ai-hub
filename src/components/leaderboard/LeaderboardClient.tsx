@@ -39,6 +39,7 @@ const VALID_SORT_KEYS: LeaderboardSortKey[] = [
   'overallScore',
   'codingScore',
   'mathScore',
+  'reasoningScore',
   'contextWindow',
   'inputPricePer1M',
   'outputPricePer1M',

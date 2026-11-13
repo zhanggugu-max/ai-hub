@@ -75,6 +75,9 @@ export function LeaderboardTable({
   onResetFilters,
 }: LeaderboardTableProps) {
   const isApiValueBoard = category === 'api_value';
+  const preferReasoning =
+    entries.some((e) => e.scores.reasoning !== undefined) &&
+    entries.every((e) => e.scores.math === undefined);
 
   if (entries.length === 0) {
     return (
@@ -157,14 +160,25 @@ export function LeaderboardTable({
                   </button>
                 </TableHead>
                 <TableHead className="text-right">
-                  <button
-                    type="button"
-                    onClick={() => onSort('mathScore')}
-                    className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-950"
-                  >
-                    数学
-                    <SortIcon columnKey="mathScore" activeKey={sortKey} order={sortOrder} />
-                  </button>
+                  {preferReasoning ? (
+                    <button
+                      type="button"
+                      onClick={() => onSort('reasoningScore')}
+                      className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-950"
+                    >
+                      推理
+                      <SortIcon columnKey="reasoningScore" activeKey={sortKey} order={sortOrder} />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onSort('mathScore')}
+                      className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-950"
+                    >
+                      数学
+                      <SortIcon columnKey="mathScore" activeKey={sortKey} order={sortOrder} />
+                    </button>
+                  )}
                 </TableHead>
               </>
             )}
@@ -310,7 +324,18 @@ export function LeaderboardTable({
                     </TableCell>
 
                     <TableCell className="text-right tabular-nums text-slate-700">
-                      {entry.scores.math !== undefined ? (
+                      {preferReasoning ? (
+                        entry.scores.reasoning !== undefined ? (
+                          entry.scores.reasoning.toFixed(1)
+                        ) : (
+                          <span
+                            className="text-xs text-slate-400"
+                            title="该模型暂无公开推理基准数据，不拉低综合分"
+                          >
+                            暂无
+                          </span>
+                        )
+                      ) : entry.scores.math !== undefined ? (
                         entry.scores.math.toFixed(1)
                       ) : (
                         <span
