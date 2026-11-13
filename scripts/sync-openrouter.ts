@@ -48,11 +48,11 @@ const LMARENA_TREE_MIRRORS = [
 
 const METHODOLOGY_NOTES: Record<LeaderboardCategory, string> = {
   overall:
-    '多源融合榜单：以 LMArena 官方公开数据集（text_style_control）综合/代码/数学 Elo 为核心校准基准，融合 OpenRouter Artificial Analysis（AA 综合/代码/Agent 指数）与 DesignArena 盲测评分统一归一化为 0–100 量纲；同时保留最新 Preview、Exp 及带日期主版本模型并按跑分完整性智能去重。',
+    '本榜单已综合 OpenRouter AA 跑分与 LMArena 盲测 Elo：以 LMArena 官方公开数据集（text_style_control）综合/代码/数学 Elo 为核心校准基准，融合 OpenRouter Artificial Analysis（AA 综合/代码/Agent 指数）与 DesignArena 评分统一归一化为 0–100 量纲；同时保留最新 Preview、Exp 及带日期主版本模型并按跑分完整性智能去重。',
   open_source:
-    '自动筛选具备开源权重仓库（Hugging Face Hub ID 或 LMArena 开源协议标注）且拥有 LMArena / AA / DesignArena 任一权威评测数据的主流开源模型（DeepSeek、Qwen、Llama、GLM、Kimi 等）。',
+    '本榜单已综合 OpenRouter AA 跑分与 LMArena 盲测 Elo：自动筛选具备开源权重仓库（Hugging Face Hub ID 或 LMArena 开源协议标注）的主流开源模型（DeepSeek、Qwen、Llama、GLM、Kimi 等），统一按 0–100 综合分排序。',
   api_value:
-    '筛选综合能力分 ≥ 55 的在役商用与开源模型，按 1:3（输入:输出）加权均价计算能力/成本比（能力分 / ∛均价）排序，全面呈现 DeepSeek、Qwen、GLM、Gemini Flash 等高性价比推理选择。',
+    '本榜单已综合 OpenRouter AA 跑分与 LMArena 盲测 Elo：筛选综合能力分 ≥ 55 的在役商用与开源模型，按 1:3（输入:输出）加权均价计算能力/成本比（能力分 / ∛均价）排序，全面呈现 DeepSeek、Qwen、GLM、Gemini Flash 等高性价比推理选择。',
 };
 
 const OFFICIAL_DISCLAIMER =

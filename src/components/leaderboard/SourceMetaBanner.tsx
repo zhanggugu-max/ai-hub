@@ -72,7 +72,7 @@ export function SourceMetaBanner({ snapshot }: SourceMetaBannerProps) {
               <DialogHeader>
                 <DialogTitle>评分口径与合规免责声明</DialogTitle>
                 <DialogDescription>
-                  本页聚合公开基准与模型参数，定时刷新并保留更新记录，不承诺毫秒级实时性。
+                  本页已综合 OpenRouter AA 跑分与 LMArena 盲测 Elo 等公开基准，定时刷新并保留更新记录，不承诺毫秒级实时性。
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 pt-2 text-sm leading-relaxed text-slate-700">
