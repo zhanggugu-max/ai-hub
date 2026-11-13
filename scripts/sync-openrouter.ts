@@ -48,11 +48,11 @@ const LMARENA_TREE_MIRRORS = [
 
 const METHODOLOGY_NOTES: Record<LeaderboardCategory, string> = {
   overall:
-    '本榜单已综合 OpenRouter AA 跑分与 LMArena 盲测 Elo：以 LMArena 官方公开数据集（text_style_control）综合/代码/数学 Elo 为核心校准基准，融合 OpenRouter Artificial Analysis（AA 综合/代码/Agent 指数）与 DesignArena 评分统一归一化为 0–100 量纲；同时保留最新 Preview、Exp 及带日期主版本模型并按跑分完整性智能去重。',
+    '综合分按来源优先级统一归一化为 0–100 量纲：① 优先采用 LMArena 盲测 overall Elo（权重 100%）；② 若暂无 LMArena 成绩，其次使用 OpenRouter Artificial Analysis（AA）综合指数；③ 前两项均缺失时，按 AA 代码/Agent 子项与 DesignArena 加权估算且封顶 72 分。缺失处理：仅缺代码、数学或复杂推理子项时，不补零也不拉低综合分（对应列标注“暂无”，按子项排序时自动置底）。',
   open_source:
-    '本榜单已综合 OpenRouter AA 跑分与 LMArena 盲测 Elo：自动筛选具备开源权重仓库（Hugging Face Hub ID 或 LMArena 开源协议标注）的主流开源模型（DeepSeek、Qwen、Llama、GLM、Kimi 等），统一按 0–100 综合分排序。',
+    '自动筛选具备 Hugging Face Hub 权重 ID 或 LMArena 开源协议标注的主流开源模型（DeepSeek、Qwen、Llama、GLM、Kimi、Muse 等），综合分采用与综合榜一致的“LMArena Elo -> AA 综合指数 -> 子项估算（封顶 72 分）”三级归一化逻辑；缺失子项不拉低综合分。',
   api_value:
-    '本榜单已综合 OpenRouter AA 跑分与 LMArena 盲测 Elo：筛选综合能力分 ≥ 55 的在役商用与开源模型，按 1:3（输入:输出）加权均价计算能力/成本比（能力分 / ∛均价）排序，全面呈现 DeepSeek、Qwen、GLM、Gemini Flash 等高性价比推理选择。',
+    '筛选综合分 ≥ 55 且具明确计费单价的在役模型。加权均价 ($/1M) = (输入单价 + 3 × 输出单价) / 4；性价比分 = 综合分 / ∛加权均价，数值越高代表同成本下综合能力越强。',
 };
 
 const OFFICIAL_DISCLAIMER =
@@ -324,6 +324,7 @@ function computeUnifiedScores(params: {
 
 function buildHighlights(params: {
   lmArenaElo: number | null;
+  intelligenceIndex: number | null;
   contextK: number;
   codingScore: number | null;
   designArenaElo: number | null;
@@ -335,6 +336,12 @@ function buildHighlights(params: {
 
   if (params.lmArenaElo !== null) {
     tags.push(`Arena:${Math.round(params.lmArenaElo)}`);
+  } else if (params.intelligenceIndex !== null) {
+    tags.push(`AA综合:${Math.round(params.intelligenceIndex)}`);
+  } else if (params.designArenaElo !== null) {
+    tags.push(`DA:${params.designArenaElo}`);
+  } else {
+    tags.push('子项估算');
   }
 
   if (params.contextK >= 1000) {
@@ -360,10 +367,6 @@ function buildHighlights(params: {
 
   if (params.blendedPrice > 0 && params.blendedPrice <= 0.5) {
     tags.push('超低成本');
-  }
-
-  if (params.designArenaElo !== null && tags.length < 3) {
-    tags.push(`DA:${params.designArenaElo}`);
   }
 
   return Array.from(new Set(tags)).slice(0, 3);
@@ -676,6 +679,7 @@ async function fetchMergedModels(lmIndex: LmArenaIndex | null): Promise<Normaliz
       blendedPricePer1MUsd: blendedPrice,
       highlights: buildHighlights({
         lmArenaElo: lmArena?.overallElo ?? null,
+        intelligenceIndex,
         contextK,
         codingScore: unified.codingScore,
         designArenaElo,

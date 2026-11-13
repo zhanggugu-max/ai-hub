@@ -1,7 +1,12 @@
 import { ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { LeaderboardEntry } from '@/data/leaderboard/mock-data';
-import { formatContextWindow } from '@/lib/leaderboard/helpers';
+import {
+  formatContextWindow,
+  formatExactContextTokens,
+  getDetailLinkLabel,
+  getScoreSourceInfo,
+} from '@/lib/leaderboard/helpers';
 import { RankDeltaBadge } from './RankDeltaBadge';
 
 interface LeaderboardTopCardProps {
@@ -20,6 +25,8 @@ const RANK_BADGE_STYLES: Record<number, string> = {
 export function LeaderboardTopCard({ entry }: LeaderboardTopCardProps) {
   const rankBadgeStyle =
     RANK_BADGE_STYLES[entry.rank] ?? 'bg-slate-100 text-slate-800 border-slate-200';
+  const scoreSource = getScoreSourceInfo(entry);
+  const detailLabel = getDetailLinkLabel(entry.officialUrl);
 
   return (
     <article className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs transition-colors hover:border-blue-300">
@@ -50,7 +57,8 @@ export function LeaderboardTopCard({ entry }: LeaderboardTopCardProps) {
             target="_blank"
             rel="noopener noreferrer nofollow"
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
-            aria-label={`访问 ${entry.modelName} 官方页`}
+            aria-label={`查看 ${entry.modelName} 的 ${detailLabel}`}
+            title={detailLabel}
           >
             <ExternalLink className="h-4 w-4" />
           </a>
@@ -80,7 +88,15 @@ export function LeaderboardTopCard({ entry }: LeaderboardTopCardProps) {
       {/* 底部指标对比 */}
       <div className="mt-4 space-y-2.5 border-t border-slate-100 pt-3.5">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-500">综合能力分</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-500">综合能力分</span>
+            <span
+              className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500"
+              title={scoreSource.detail}
+            >
+              {scoreSource.shortLabel}
+            </span>
+          </div>
           <span className="text-base font-bold tabular-nums text-blue-600">
             {entry.scores.overall.toFixed(1)}
           </span>
@@ -96,10 +112,13 @@ export function LeaderboardTopCard({ entry }: LeaderboardTopCardProps) {
           <div className="rounded-lg bg-slate-50 py-1.5">
             <div className="text-[11px] text-slate-400">代码分</div>
             <div className="font-semibold tabular-nums text-slate-800">
-              {entry.scores.coding !== undefined ? entry.scores.coding.toFixed(1) : '-'}
+              {entry.scores.coding !== undefined ? entry.scores.coding.toFixed(1) : '暂无'}
             </div>
           </div>
-          <div className="rounded-lg bg-slate-50 py-1.5">
+          <div
+            className="rounded-lg bg-slate-50 py-1.5"
+            title={formatExactContextTokens(entry.contextWindowK)}
+          >
             <div className="text-[11px] text-slate-400">上下文</div>
             <div className="font-semibold tabular-nums text-slate-800">
               {formatContextWindow(entry.contextWindowK)}

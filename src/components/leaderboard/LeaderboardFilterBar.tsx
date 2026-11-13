@@ -21,6 +21,7 @@ interface LeaderboardFilterBarProps {
   providers: string[];
   totalCount: number;
   filteredCount: number;
+  visibleCount: number;
   onFilterChange: <K extends keyof LeaderboardFilterState>(
     key: K,
     value: LeaderboardFilterState[K]
@@ -46,6 +47,8 @@ const CONTEXT_LABELS: Record<number, string> = {
 const SORT_OPTIONS: { value: LeaderboardSortKey; label: string }[] = [
   { value: 'rank', label: '默认排名' },
   { value: 'overallScore', label: '综合能力分' },
+  { value: 'valueScore', label: '性价比分' },
+  { value: 'blendedPricePer1M', label: '1:3 加权均价' },
   { value: 'codingScore', label: '代码能力分' },
   { value: 'mathScore', label: '数学推理分' },
   { value: 'contextWindow', label: '上下文长度' },
@@ -62,6 +65,7 @@ export function LeaderboardFilterBar({
   providers,
   totalCount,
   filteredCount,
+  visibleCount,
   onFilterChange,
   onSortSelect,
   onReset,
@@ -200,11 +204,32 @@ export function LeaderboardFilterBar({
         <div className="inline-flex items-center gap-1.5">
           <SlidersHorizontal className="h-3.5 w-3.5" />
           <span>
-            当前展示{' '}
-            <strong className="font-semibold tabular-nums text-slate-900">
-              {filteredCount}
-            </strong>{' '}
-            / {totalCount} 个模型（点击表头可切换升/降序）
+            {filteredCount === totalCount ? (
+              <>
+                共匹配{' '}
+                <strong className="font-semibold tabular-nums text-slate-900">
+                  {filteredCount}
+                </strong>{' '}
+                款，已显示{' '}
+                <strong className="font-semibold tabular-nums text-slate-900">
+                  {visibleCount}
+                </strong>{' '}
+                款
+              </>
+            ) : (
+              <>
+                共匹配{' '}
+                <strong className="font-semibold tabular-nums text-slate-900">
+                  {filteredCount}
+                </strong>{' '}
+                / {totalCount} 款，已显示{' '}
+                <strong className="font-semibold tabular-nums text-slate-900">
+                  {visibleCount}
+                </strong>{' '}
+                款
+              </>
+            )}
+            （点击表头可切换升/降序）
           </span>
         </div>
 

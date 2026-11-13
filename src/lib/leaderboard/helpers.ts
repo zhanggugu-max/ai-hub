@@ -31,13 +31,120 @@ export function formatUpdatedTime(isoDate: string): string {
   }).format(date);
 }
 
-/** 格式化上下文长度 */
+/** 统一格式化上下文长度（消除 1M 与 1.0M 精度混用） */
 export function formatContextWindow(contextK: number): string {
   if (contextK >= 1000) {
-    const m = contextK / 1000;
-    return Number.isInteger(m) ? `${m}M` : `${m.toFixed(1)}M`;
+    const roundedTenth = Math.round((contextK / 1000) * 10) / 10;
+    return Number.isInteger(roundedTenth) ? `${roundedTenth}M` : `${roundedTenth.toFixed(1)}M`;
   }
   return `${contextK}K`;
+}
+
+/** 格式化精确上下文 token 量（用于悬停提示与横向对比明细） */
+export function formatExactContextTokens(contextK: number): string {
+  return `${contextK.toLocaleString('en-US')}K tokens`;
+}
+
+export interface ApiValueMetrics {
+  blendedPricePer1M: number | null;
+  valueScore: number | null;
+}
+
+/** 计算 API 性价比榜核心衍生指标：1:3 加权均价与性价比分（能力分 / ∛加权均价） */
+export function computeApiValueMetrics(entry: LeaderboardEntry): ApiValueMetrics {
+  if (!entry.pricing) {
+    return { blendedPricePer1M: null, valueScore: null };
+  }
+  const blended = (entry.pricing.inputPer1MUsd + 3 * entry.pricing.outputPer1MUsd) / 4;
+  if (!Number.isFinite(blended) || blended <= 0) {
+    return { blendedPricePer1M: blended === 0 ? 0 : null, valueScore: null };
+  }
+  const valueScore = entry.scores.overall / Math.cbrt(blended);
+  return {
+    blendedPricePer1M: blended,
+    valueScore: Number.isFinite(valueScore) ? valueScore : null,
+  };
+}
+
+export interface ScoreSourceInfo {
+  shortLabel: string;
+  detail: string;
+}
+
+/** 根据模型亮点标签与子项指标识别综合分主来源 */
+export function getScoreSourceInfo(entry: LeaderboardEntry): ScoreSourceInfo {
+  const arenaTag = entry.highlights.find((tag) => tag.startsWith('Arena:'));
+  if (arenaTag) {
+    const elo = arenaTag.slice('Arena:'.length);
+    return {
+      shortLabel: `LMArena ${elo}`,
+      detail: `综合分由 LMArena 盲测 Elo (${elo}) 线性换算；缺少的代码/数学子项不拉低综合分。`,
+    };
+  }
+
+  const aaTag = entry.highlights.find((tag) => tag.startsWith('AA综合:'));
+  if (aaTag) {
+    const idx = aaTag.slice('AA综合:'.length);
+    return {
+      shortLabel: 'AA 综合指数',
+      detail: `综合分由 Artificial Analysis 综合指数 (${idx}) 归一化换算；暂无 LMArena 子项时不按零计分。`,
+    };
+  }
+
+  const daTag = entry.highlights.find((tag) => tag.startsWith('DA:'));
+  if (daTag) {
+    const elo = daTag.slice('DA:'.length);
+    return {
+      shortLabel: `DA/子项估算`,
+      detail: `暂无 LMArena 与 AA 综合分，由 DesignArena (${elo}) 与 AA 能力子项加权估算（封顶 72 分）。`,
+    };
+  }
+
+  if (entry.highlights.includes('子项估算')) {
+    return {
+      shortLabel: 'AA 子项估算',
+      detail: '暂无 LMArena 与 AA 综合分，由 AA 代码/Agent 子项加权估算（封顶 72 分）。',
+    };
+  }
+
+  if (entry.scores.coding !== undefined || entry.scores.reasoning !== undefined) {
+    return {
+      shortLabel: 'AA / 公开基准',
+      detail: '来自 OpenRouter Artificial Analysis 与公开基准综合归一化分数。',
+    };
+  }
+
+  return {
+    shortLabel: '公开基准聚合',
+    detail: '来自 OpenRouter / DesignArena 公开评测汇总。',
+  };
+}
+
+const VENDOR_HOMEPAGES: Record<string, string> = {
+  OpenAI: 'https://openai.com/',
+  Anthropic: 'https://www.anthropic.com/',
+  Google: 'https://deepmind.google/models/gemini/',
+  DeepSeek: 'https://www.deepseek.com/',
+  Qwen: 'https://qwenlm.github.io/',
+  Meta: 'https://ai.meta.com/',
+  xAI: 'https://x.ai/',
+  'Z.ai': 'https://z.ai/',
+  MoonshotAI: 'https://www.moonshot.ai/',
+  Mistral: 'https://mistral.ai/',
+  MiniMax: 'https://www.minimax.io/',
+  Cohere: 'https://cohere.com/',
+  Amazon: 'https://aws.amazon.com/bedrock/',
+  Xiaomi: 'https://www.mi.com/',
+};
+
+/** 匹配主流模型研发商的官方主页（无法确认的第三方厂商返回 null，避免误标） */
+export function getVendorHomepageUrl(provider: string): string | null {
+  return VENDOR_HOMEPAGES[provider] ?? null;
+}
+
+/** 识别详情链接真实站点归属，避免将 OpenRouter 页面误称为“官网” */
+export function getDetailLinkLabel(url: string): string {
+  return url.includes('openrouter.ai') ? 'OpenRouter 详情' : '官方详情';
 }
 
 /** 提取当前榜单内不重复的机构列表 */
@@ -67,6 +174,10 @@ function getNumericSortValue(
       return entry.pricing?.inputPer1MUsd ?? null;
     case 'outputPricePer1M':
       return entry.pricing?.outputPer1MUsd ?? null;
+    case 'blendedPricePer1M':
+      return computeApiValueMetrics(entry).blendedPricePer1M;
+    case 'valueScore':
+      return computeApiValueMetrics(entry).valueScore;
     default:
       return entry.rank;
   }
@@ -120,10 +231,12 @@ export interface BestCompareMetrics {
   maxContextK: number | null;
   minInputPrice: number | null;
   minOutputPrice: number | null;
+  minBlendedPrice: number | null;
+  maxValueScore: number | null;
   maxSpeed: number | null;
 }
 
-function findDistinctBest(values: (number | undefined)[], mode: 'max' | 'min'): number | null {
+function findDistinctBest(values: (number | undefined | null)[], mode: 'max' | 'min'): number | null {
   const valid = values.filter((v): v is number => typeof v === 'number' && !Number.isNaN(v));
   if (valid.length < 2) return null;
   const best = mode === 'max' ? Math.max(...valid) : Math.min(...valid);
@@ -133,6 +246,7 @@ function findDistinctBest(values: (number | undefined)[], mode: 'max' | 'min'): 
 
 /** 计算横向对比组内各项的最优值（至少 2 个有效值且非全部相同时返回高亮基准） */
 export function getBestCompareMetrics(entries: LeaderboardEntry[]): BestCompareMetrics {
+  const apiMetrics = entries.map((e) => computeApiValueMetrics(e));
   return {
     maxOverall: findDistinctBest(entries.map((e) => e.scores.overall), 'max'),
     maxCoding: findDistinctBest(entries.map((e) => e.scores.coding), 'max'),
@@ -141,6 +255,8 @@ export function getBestCompareMetrics(entries: LeaderboardEntry[]): BestCompareM
     maxContextK: findDistinctBest(entries.map((e) => e.contextWindowK), 'max'),
     minInputPrice: findDistinctBest(entries.map((e) => e.pricing?.inputPer1MUsd), 'min'),
     minOutputPrice: findDistinctBest(entries.map((e) => e.pricing?.outputPer1MUsd), 'min'),
+    minBlendedPrice: findDistinctBest(apiMetrics.map((m) => m.blendedPricePer1M), 'min'),
+    maxValueScore: findDistinctBest(apiMetrics.map((m) => m.valueScore), 'max'),
     maxSpeed: findDistinctBest(entries.map((e) => e.speedTokensPerSec), 'max'),
   };
 }

@@ -64,12 +64,12 @@ export function LeaderboardHeader({
         onValueChange={(value) => onCategoryChange(value as LeaderboardCategory)}
         className="w-full"
       >
-        <TabsList className="grid h-auto w-full grid-cols-1 gap-1.5 bg-slate-100 p-1.5 sm:inline-grid sm:w-auto sm:grid-cols-3">
+        <TabsList className="grid w-full grid-cols-1 gap-1.5 bg-slate-100 p-1.5 group-data-horizontal/tabs:h-auto sm:inline-grid sm:w-auto sm:grid-cols-3">
           {LEADERBOARD_CATEGORIES.map((tab) => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
-              className="flex items-center justify-center gap-2 px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-xs"
+              className="flex h-auto items-center justify-center gap-2 px-4 py-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-xs data-active:bg-white data-active:shadow-xs"
             >
               {CATEGORY_ICONS[tab.value]}
               <span>{tab.label}</span>

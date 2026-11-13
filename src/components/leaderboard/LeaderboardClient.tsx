@@ -42,6 +42,8 @@ const VALID_SORT_KEYS: LeaderboardSortKey[] = [
   'contextWindow',
   'inputPricePer1M',
   'outputPricePer1M',
+  'blendedPricePer1M',
+  'valueScore',
 ];
 
 function parseInitialFilters(
@@ -83,13 +85,13 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
   );
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
-  const [expandedAll, setExpandedAll] = useState(false);
+  const [expandedAll, setExpandedAll] = useState(() => searchParams.get('all') === '1');
   const urlTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeSnapshot = snapshots[filters.category];
 
   const pushUrlParams = useCallback(
-    (next: LeaderboardFilterState) => {
+    (next: LeaderboardFilterState, nextExpandedAll = expandedAll) => {
       const nextParams = new URLSearchParams();
       if (next.category !== DEFAULT_FILTER_STATE.category) nextParams.set('board', next.category);
       if (next.search.trim()) nextParams.set('q', next.search.trim());
@@ -98,25 +100,26 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
       if (next.minContextK > 0) nextParams.set('ctx', String(next.minContextK));
       if (next.sortKey !== 'rank') nextParams.set('sort', next.sortKey);
       if (next.sortOrder !== 'asc') nextParams.set('order', next.sortOrder);
+      if (nextExpandedAll) nextParams.set('all', '1');
 
       const queryString = nextParams.toString();
       router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
     },
-    [pathname, router]
+    [pathname, router, expandedAll]
   );
 
   const scheduleUrlSync = useCallback(
-    (next: LeaderboardFilterState, immediate: boolean) => {
+    (next: LeaderboardFilterState, immediate: boolean, nextExpandedAll?: boolean) => {
       if (urlTimerRef.current) {
         clearTimeout(urlTimerRef.current);
         urlTimerRef.current = null;
       }
       if (immediate) {
-        pushUrlParams(next);
+        pushUrlParams(next, nextExpandedAll);
         return;
       }
       urlTimerRef.current = setTimeout(() => {
-        pushUrlParams(next);
+        pushUrlParams(next, nextExpandedAll);
       }, 250);
     },
     [pushUrlParams]
@@ -138,7 +141,7 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
     };
     setExpandedAll(false);
     setFilters(next);
-    scheduleUrlSync(next, true);
+    scheduleUrlSync(next, true, false);
   };
 
   const handleFilterChange = <K extends keyof LeaderboardFilterState>(
@@ -154,7 +157,8 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
     const defaultOrder =
       sortKey === 'rank' ||
       sortKey === 'inputPricePer1M' ||
-      sortKey === 'outputPricePer1M'
+      sortKey === 'outputPricePer1M' ||
+      sortKey === 'blendedPricePer1M'
         ? 'asc'
         : 'desc';
     const next: LeaderboardFilterState = {
@@ -174,7 +178,8 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
       nextOrder =
         columnKey === 'rank' ||
         columnKey === 'inputPricePer1M' ||
-        columnKey === 'outputPricePer1M'
+        columnKey === 'outputPricePer1M' ||
+        columnKey === 'blendedPricePer1M'
           ? 'asc'
           : 'desc';
     }
@@ -273,12 +278,14 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
         providers={providers}
         totalCount={activeSnapshot.entries.length}
         filteredCount={filteredEntries.length}
+        visibleCount={visibleEntries.length}
         onFilterChange={handleFilterChange}
         onSortSelect={handleSortSelect}
         onReset={handleResetFilters}
       />
 
       <LeaderboardTable
+        category={filters.category}
         entries={visibleEntries}
         sortKey={filters.sortKey}
         sortOrder={filters.sortOrder}
@@ -290,6 +297,7 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
       />
 
       <LeaderboardCardList
+        category={filters.category}
         entries={visibleEntries}
         selectedSlugs={selectedSlugs}
         maxCompare={MAX_COMPARE_COUNT}
@@ -302,7 +310,11 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => setExpandedAll((prev) => !prev)}
+            onClick={() => {
+              const nextExpanded = !expandedAll;
+              setExpandedAll(nextExpanded);
+              scheduleUrlSync(filters, true, nextExpanded);
+            }}
             className="gap-1.5 rounded-xl border-slate-200 bg-white px-5 text-xs font-semibold text-slate-700 shadow-2xs hover:border-blue-300 hover:text-blue-600"
           >
             {expandedAll ? (

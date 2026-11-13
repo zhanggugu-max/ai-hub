@@ -4,11 +4,19 @@ import { ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import type { LeaderboardEntry } from '@/data/leaderboard/mock-data';
-import { formatContextWindow } from '@/lib/leaderboard/helpers';
+import type { LeaderboardCategory, LeaderboardEntry } from '@/data/leaderboard/mock-data';
+import {
+  computeApiValueMetrics,
+  formatContextWindow,
+  formatExactContextTokens,
+  getDetailLinkLabel,
+  getScoreSourceInfo,
+  getVendorHomepageUrl,
+} from '@/lib/leaderboard/helpers';
 import { RankDeltaBadge } from './RankDeltaBadge';
 
 interface LeaderboardCardListProps {
+  category: LeaderboardCategory;
   entries: LeaderboardEntry[];
   selectedSlugs: string[];
   maxCompare: number;
@@ -17,12 +25,15 @@ interface LeaderboardCardListProps {
 }
 
 export function LeaderboardCardList({
+  category,
   entries,
   selectedSlugs,
   maxCompare,
   onToggleCompare,
   onResetFilters,
 }: LeaderboardCardListProps) {
+  const isApiValueBoard = category === 'api_value';
+
   if (entries.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 bg-white py-12 text-center md:hidden">
@@ -39,6 +50,10 @@ export function LeaderboardCardList({
       {entries.map((entry) => {
         const isChecked = selectedSlugs.includes(entry.modelSlug);
         const isDisabled = !isChecked && selectedSlugs.length >= maxCompare;
+        const scoreSource = getScoreSourceInfo(entry);
+        const apiMetrics = computeApiValueMetrics(entry);
+        const vendorUrl = getVendorHomepageUrl(entry.provider);
+        const detailLabel = getDetailLinkLabel(entry.officialUrl);
 
         return (
           <article
@@ -87,47 +102,87 @@ export function LeaderboardCardList({
 
             <div className="mt-3 grid grid-cols-4 gap-2 rounded-lg bg-slate-50 p-2.5 text-center">
               <div>
-                <div className="text-[11px] text-slate-500">综合</div>
+                <div className="text-[11px] text-slate-500">综合分</div>
                 <div className="font-bold tabular-nums text-slate-900">
                   {entry.scores.overall.toFixed(1)}
                 </div>
+                <div className="truncate text-[10px] text-slate-400">{scoreSource.shortLabel}</div>
               </div>
-              <div>
-                <div className="text-[11px] text-slate-500">代码</div>
-                <div className="font-medium tabular-nums text-slate-800">
-                  {entry.scores.coding !== undefined ? entry.scores.coding.toFixed(1) : '-'}
-                </div>
-              </div>
-              <div>
-                <div className="text-[11px] text-slate-500">数学</div>
-                <div className="font-medium tabular-nums text-slate-800">
-                  {entry.scores.math !== undefined ? entry.scores.math.toFixed(1) : '-'}
-                </div>
-              </div>
+
+              {isApiValueBoard ? (
+                <>
+                  <div>
+                    <div className="text-[11px] text-slate-500">性价比分</div>
+                    <div className="font-semibold tabular-nums text-emerald-700">
+                      {apiMetrics.valueScore !== null ? apiMetrics.valueScore.toFixed(1) : '暂无'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-slate-500">1:3 均价</div>
+                    <div className="font-medium tabular-nums text-slate-800">
+                      {apiMetrics.blendedPricePer1M !== null
+                        ? `$${apiMetrics.blendedPricePer1M.toFixed(3)}`
+                        : '暂无'}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <div className="text-[11px] text-slate-500">代码</div>
+                    <div className="font-medium tabular-nums text-slate-800">
+                      {entry.scores.coding !== undefined ? entry.scores.coding.toFixed(1) : '暂无'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-slate-500">数学</div>
+                    <div className="font-medium tabular-nums text-slate-800">
+                      {entry.scores.math !== undefined ? entry.scores.math.toFixed(1) : '暂无'}
+                    </div>
+                  </div>
+                </>
+              )}
+
               <div>
                 <div className="text-[11px] text-slate-500">上下文</div>
-                <div className="font-medium tabular-nums text-slate-800">
+                <div
+                  className="font-medium tabular-nums text-slate-800"
+                  title={formatExactContextTokens(entry.contextWindowK)}
+                >
                   {formatContextWindow(entry.contextWindowK)}
                 </div>
               </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
               <div className="tabular-nums">
-                API 价格：
+                输入/输出：
                 {entry.pricing
                   ? `$${entry.pricing.inputPer1MUsd.toFixed(2)} / $${entry.pricing.outputPer1MUsd.toFixed(2)} (1M)`
-                  : '-'}
+                  : '暂无'}
               </div>
-              <a
-                href={entry.officialUrl}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                className="inline-flex items-center gap-1 font-medium text-blue-600"
-              >
-                官方页
-                <ExternalLink className="h-3 w-3" />
-              </a>
+              <div className="flex items-center gap-3">
+                <a
+                  href={entry.officialUrl}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className="inline-flex items-center gap-1 font-medium text-blue-600"
+                >
+                  {detailLabel}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+                {vendorUrl && vendorUrl !== entry.officialUrl && (
+                  <a
+                    href={vendorUrl}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-900"
+                  >
+                    厂商官网
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
             </div>
           </article>
         );

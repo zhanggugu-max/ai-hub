@@ -18,13 +18,22 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import type {
+  LeaderboardCategory,
   LeaderboardEntry,
   LeaderboardSortKey,
 } from '@/data/leaderboard/mock-data';
-import { formatContextWindow } from '@/lib/leaderboard/helpers';
+import {
+  computeApiValueMetrics,
+  formatContextWindow,
+  formatExactContextTokens,
+  getDetailLinkLabel,
+  getScoreSourceInfo,
+  getVendorHomepageUrl,
+} from '@/lib/leaderboard/helpers';
 import { RankDeltaBadge } from './RankDeltaBadge';
 
 interface LeaderboardTableProps {
+  category: LeaderboardCategory;
   entries: LeaderboardEntry[];
   sortKey: LeaderboardSortKey;
   sortOrder: 'asc' | 'desc';
@@ -55,6 +64,7 @@ function SortIcon({
 }
 
 export function LeaderboardTable({
+  category,
   entries,
   sortKey,
   sortOrder,
@@ -64,6 +74,8 @@ export function LeaderboardTable({
   onToggleCompare,
   onResetFilters,
 }: LeaderboardTableProps) {
+  const isApiValueBoard = category === 'api_value';
+
   if (entries.length === 0) {
     return (
       <div className="hidden rounded-xl border border-dashed border-slate-300 bg-white py-14 text-center md:block">
@@ -80,8 +92,8 @@ export function LeaderboardTable({
       <Table>
         <TableHeader className="bg-slate-50/80">
           <TableRow>
-            <TableHead className="w-[54px] text-center">对比</TableHead>
-            <TableHead className="w-[96px]">
+            <TableHead className="w-[52px] text-center">对比</TableHead>
+            <TableHead className="w-[90px]">
               <button
                 type="button"
                 onClick={() => onSort('rank')}
@@ -91,7 +103,7 @@ export function LeaderboardTable({
                 <SortIcon columnKey="rank" activeKey={sortKey} order={sortOrder} />
               </button>
             </TableHead>
-            <TableHead className="min-w-[230px]">模型 / 机构 / 协议</TableHead>
+            <TableHead className="min-w-[220px]">模型 / 机构 / 协议</TableHead>
             <TableHead className="text-right">
               <button
                 type="button"
@@ -102,26 +114,61 @@ export function LeaderboardTable({
                 <SortIcon columnKey="overallScore" activeKey={sortKey} order={sortOrder} />
               </button>
             </TableHead>
-            <TableHead className="text-right">
-              <button
-                type="button"
-                onClick={() => onSort('codingScore')}
-                className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-950"
-              >
-                代码
-                <SortIcon columnKey="codingScore" activeKey={sortKey} order={sortOrder} />
-              </button>
-            </TableHead>
-            <TableHead className="text-right">
-              <button
-                type="button"
-                onClick={() => onSort('mathScore')}
-                className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-950"
-              >
-                数学
-                <SortIcon columnKey="mathScore" activeKey={sortKey} order={sortOrder} />
-              </button>
-            </TableHead>
+
+            {isApiValueBoard ? (
+              <>
+                <TableHead className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => onSort('valueScore')}
+                    className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-950"
+                    title="性价比分 = 综合分 / ∛(1:3 加权均价)"
+                  >
+                    性价比分
+                    <SortIcon columnKey="valueScore" activeKey={sortKey} order={sortOrder} />
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => onSort('blendedPricePer1M')}
+                    className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-950"
+                    title="1:3 加权均价 = (输入 + 3 × 输出) / 4"
+                  >
+                    1:3 均价 ($/1M)
+                    <SortIcon
+                      columnKey="blendedPricePer1M"
+                      activeKey={sortKey}
+                      order={sortOrder}
+                    />
+                  </button>
+                </TableHead>
+              </>
+            ) : (
+              <>
+                <TableHead className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => onSort('codingScore')}
+                    className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-950"
+                  >
+                    代码
+                    <SortIcon columnKey="codingScore" activeKey={sortKey} order={sortOrder} />
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => onSort('mathScore')}
+                    className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-950"
+                  >
+                    数学
+                    <SortIcon columnKey="mathScore" activeKey={sortKey} order={sortOrder} />
+                  </button>
+                </TableHead>
+              </>
+            )}
+
             <TableHead className="text-right">
               <button
                 type="button"
@@ -142,13 +189,17 @@ export function LeaderboardTable({
                 <SortIcon columnKey="inputPricePer1M" activeKey={sortKey} order={sortOrder} />
               </button>
             </TableHead>
-            <TableHead className="w-[70px] text-right">官网</TableHead>
+            <TableHead className="w-[126px] text-right">详情 / 官网</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {entries.map((entry) => {
             const isChecked = selectedSlugs.includes(entry.modelSlug);
             const isDisabled = !isChecked && selectedSlugs.length >= maxCompare;
+            const scoreSource = getScoreSourceInfo(entry);
+            const apiMetrics = computeApiValueMetrics(entry);
+            const vendorUrl = getVendorHomepageUrl(entry.provider);
+            const detailLabel = getDetailLinkLabel(entry.officialUrl);
 
             return (
               <TableRow
@@ -210,7 +261,7 @@ export function LeaderboardTable({
                 </TableCell>
 
                 <TableCell className="text-right">
-                  <div className="inline-flex flex-col items-end gap-1">
+                  <div className="inline-flex flex-col items-end gap-1" title={scoreSource.detail}>
                     <span className="font-bold tabular-nums text-slate-900">
                       {entry.scores.overall.toFixed(1)}
                     </span>
@@ -220,18 +271,63 @@ export function LeaderboardTable({
                         style={{ width: `${Math.min(100, Math.max(0, entry.scores.overall))}%` }}
                       />
                     </div>
+                    <span className="text-[10px] leading-none text-slate-400">
+                      {scoreSource.shortLabel}
+                    </span>
                   </div>
                 </TableCell>
 
-                <TableCell className="text-right tabular-nums text-slate-700">
-                  {entry.scores.coding !== undefined ? entry.scores.coding.toFixed(1) : '-'}
-                </TableCell>
+                {isApiValueBoard ? (
+                  <>
+                    <TableCell className="text-right font-semibold tabular-nums text-emerald-700">
+                      {apiMetrics.valueScore !== null ? (
+                        apiMetrics.valueScore.toFixed(1)
+                      ) : (
+                        <span className="text-xs font-normal text-slate-400">暂无</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right text-xs font-medium tabular-nums text-slate-700">
+                      {apiMetrics.blendedPricePer1M !== null ? (
+                        `$${apiMetrics.blendedPricePer1M.toFixed(3)}`
+                      ) : (
+                        <span className="text-slate-400">暂无</span>
+                      )}
+                    </TableCell>
+                  </>
+                ) : (
+                  <>
+                    <TableCell className="text-right tabular-nums text-slate-700">
+                      {entry.scores.coding !== undefined ? (
+                        entry.scores.coding.toFixed(1)
+                      ) : (
+                        <span
+                          className="text-xs text-slate-400"
+                          title="该模型暂无公开代码基准数据，不拉低综合分"
+                        >
+                          暂无
+                        </span>
+                      )}
+                    </TableCell>
 
-                <TableCell className="text-right tabular-nums text-slate-700">
-                  {entry.scores.math !== undefined ? entry.scores.math.toFixed(1) : '-'}
-                </TableCell>
+                    <TableCell className="text-right tabular-nums text-slate-700">
+                      {entry.scores.math !== undefined ? (
+                        entry.scores.math.toFixed(1)
+                      ) : (
+                        <span
+                          className="text-xs text-slate-400"
+                          title="该模型暂无公开数学基准数据，不拉低综合分"
+                        >
+                          暂无
+                        </span>
+                      )}
+                    </TableCell>
+                  </>
+                )}
 
-                <TableCell className="text-right font-medium tabular-nums text-slate-700">
+                <TableCell
+                  className="text-right font-medium tabular-nums text-slate-700"
+                  title={`精确上下文长度：${formatExactContextTokens(entry.contextWindowK)}`}
+                >
                   {formatContextWindow(entry.contextWindowK)}
                 </TableCell>
 
@@ -242,20 +338,35 @@ export function LeaderboardTable({
                       {entry.pricing.outputPer1MUsd.toFixed(2)}
                     </span>
                   ) : (
-                    <span className="text-slate-400">-</span>
+                    <span className="text-slate-400">暂无</span>
                   )}
                 </TableCell>
 
                 <TableCell className="text-right">
-                  <a
-                    href={entry.officialUrl}
-                    target="_blank"
-                    rel="noopener noreferrer nofollow"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-blue-600"
-                    aria-label={`访问 ${entry.modelName} 官方页面`}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
+                  <div className="inline-flex flex-col items-end gap-1">
+                    <a
+                      href={entry.officialUrl}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:underline"
+                      aria-label={`查看 ${entry.modelName} 的 ${detailLabel}`}
+                    >
+                      <span>{detailLabel === 'OpenRouter 详情' ? 'OpenRouter' : '详情'}</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    {vendorUrl && vendorUrl !== entry.officialUrl && (
+                      <a
+                        href={vendorUrl}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                        className="inline-flex items-center gap-0.5 px-1.5 text-[11px] text-slate-500 transition-colors hover:text-slate-900 hover:underline"
+                        aria-label={`访问 ${entry.provider} 官方网站`}
+                      >
+                        <span>厂商官网</span>
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             );

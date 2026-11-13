@@ -12,7 +12,9 @@ export type LeaderboardSortKey =
   | 'mathScore'
   | 'contextWindow'
   | 'inputPricePer1M'
-  | 'outputPricePer1M';
+  | 'outputPricePer1M'
+  | 'blendedPricePer1M'
+  | 'valueScore';
 
 /** 单个模型在榜单中的评测条目 */
 export interface LeaderboardEntry {
