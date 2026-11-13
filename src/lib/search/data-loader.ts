@@ -77,7 +77,7 @@ export async function getSearchItems(): Promise<SearchItem[]> {
       .eq('status', 'published')
       .in('type', SEARCHABLE_TYPES)
       .order('published_at', { ascending: false })
-      .limit(200);
+      .limit(400);
 
     if (error || !data || data.length === 0) {
       if (error) {

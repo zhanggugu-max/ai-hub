@@ -1,3 +1,5 @@
+import { EXTRA_CURATED_RESOURCES } from './curated-prompts-and-tutorials';
+
 export type CuratedResourceType = 'tool' | 'model' | 'tutorial' | 'paper' | 'prompt';
 
 export interface CuratedResourceInput {
@@ -991,4 +993,5 @@ A minimalist editorial product photo of a matte silver smart speaker sitting on 
 1. **比例预设**：网页 Hero Banner 优先 \`16:9\` 或 \`21:9\`，社媒封面 \`3:4\`。
 2. **文字排版**：FLUX 生成海报文字后，再用 Figma / Canva 替换可编辑矢量文字以保证商用印刷清晰度。`,
   },
+  ...EXTRA_CURATED_RESOURCES,
 ];
