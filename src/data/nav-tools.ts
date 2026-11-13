@@ -1,4 +1,9 @@
-export type NavToolCategory = 'coding' | 'workflow' | 'api-compute' | 'research';
+export type NavToolCategory =
+  | 'desktop-agents'
+  | 'coding'
+  | 'workflow'
+  | 'api-compute'
+  | 'research';
 
 export type NavToolPricing = '开源免费' | '有免费额度' | '按量付费' | '订阅制';
 
@@ -24,6 +29,12 @@ export interface NavCategoryMeta {
 
 export const NAV_CATEGORIES: NavCategoryMeta[] = [
   {
+    value: 'desktop-agents',
+    label: '桌面自主智能体',
+    intro:
+      '自带桌面客户端或独立云电脑，具备本地文件读写、GUI 屏幕操作与 24/7 后台主动执行能力的数字员工。',
+  },
+  {
     value: 'coding',
     label: 'AI 编程全栈流',
     intro: '覆盖命令行 Agent、IDE 插件、原生编辑器与桌面端知识库，帮你选到顺手的写代码主力。',
@@ -46,6 +57,133 @@ export const NAV_CATEGORIES: NavCategoryMeta[] = [
 ];
 
 export const NAV_TOOLS: NavTool[] = [
+  // 0. 桌面自主智能体 (desktop-agents)
+  {
+    id: 'google-antigravity',
+    name: 'Google Antigravity',
+    category: 'desktop-agents',
+    tagline: 'Google 推出的 Agent-first 全栈研发平台，集桌面 App、IDE 与异步多智能体编排于一体。',
+    badges: ['Agent-first 平台', '桌面 App & IDE', '异步多智能体'],
+    pricingType: '有免费额度',
+    searchKeyword: 'Antigravity',
+    officialUrl: 'https://antigravity.google',
+    featured: true,
+  },
+  {
+    id: 'openai-codex-app',
+    name: 'OpenAI Codex 桌面端',
+    category: 'desktop-agents',
+    tagline: '多 Agent 并行协作的桌面指挥中心，支持本地工作树隔离与 codex cloud 云端后台任务。',
+    badges: ['多 Agent 并行', '桌面指挥中心', '云端异步任务'],
+    pricingType: '订阅制',
+    searchKeyword: 'Codex',
+    officialUrl: 'https://openai.com/codex/',
+    featured: true,
+  },
+  {
+    id: 'openai-dots',
+    name: 'OpenAI Dots',
+    category: 'desktop-agents',
+    tagline: '主动式跨应用协调智能体，离线后仍在云端持续工作，连接 4,000+ 应用并主动汇报。',
+    badges: ['主动触发', '离线云端运行', '4000+ 应用联动'],
+    pricingType: '订阅制',
+    searchKeyword: 'OpenAI',
+    officialUrl: 'https://openai.com',
+  },
+  {
+    id: 'grok-bot',
+    name: 'Grok Bot',
+    category: 'desktop-agents',
+    tagline: '多 Bot 共享持久化云电脑（浏览器/终端/文件系统），支持任务演示录制与 24/7 定时巡检。',
+    badges: ['共享云电脑', '24/7 定时巡检', '多 Bot 协同'],
+    pricingType: '订阅制',
+    searchKeyword: 'Grok',
+    officialUrl: 'https://x.ai',
+    featured: true,
+  },
+  {
+    id: 'meta-muse-agent',
+    name: 'Meta Muse（桌面个人代理）',
+    category: 'desktop-agents',
+    tagline: '运行于独立安全虚拟机的个人代理，配备 Sentinel 权限审批层，可自动管日程、填表与比价下单。',
+    badges: ['独立安全 VM', '跨应用代办', 'Sentinel 审批'],
+    pricingType: '有免费额度',
+    searchKeyword: 'Muse',
+    officialUrl: 'https://ai.meta.com',
+  },
+  {
+    id: 'claude-cowork',
+    name: 'Claude Cowork（含 Desktop）',
+    category: 'desktop-agents',
+    tagline: 'Anthropic 桌面端与本地文件跨应用协作 Agent，原生支持 MCP 工具协议与复杂文档自动化。',
+    badges: ['原生 MCP 宿主', '本地文件协作', '官方桌面端'],
+    pricingType: '有免费额度',
+    searchKeyword: 'Claude',
+    officialUrl: 'https://claude.ai/download',
+  },
+  {
+    id: 'deepseek-harness',
+    name: 'DeepSeek Harness 桌面版',
+    category: 'desktop-agents',
+    tagline: 'DeepSeek 官方桌面级自主智能体，支持后台持续运行、直接读写本地文件与长周期复杂任务。',
+    badges: ['官方桌面版', '本地文件编辑', '后台长程执行'],
+    pricingType: '有免费额度',
+    searchKeyword: 'DeepSeek',
+    officialUrl: 'https://www.deepseek.com',
+    featured: true,
+  },
+  {
+    id: 'openclaw',
+    name: 'OpenClaw',
+    category: 'desktop-agents',
+    tagline: 'MIT 开源自托管常驻助手，通过心跳网关寄生在 Telegram / WhatsApp / Slack 中 24 小时待命。',
+    badges: ['MIT 开源', '聊天软件寄生', '数据完全私有'],
+    pricingType: '开源免费',
+    searchKeyword: 'OpenClaw',
+    officialUrl: 'https://github.com/openclaw/openclaw',
+  },
+  {
+    id: 'hermes-agent-desktop',
+    name: 'Hermes Agent',
+    category: 'desktop-agents',
+    tagline: 'MIT 开源自主智能体，支持 Cron 定时任务、Webhook 触发与执行中自我迭代 Skills 技能库。',
+    badges: ['MIT 开源', '定时 & Webhook', '技能自我进化'],
+    pricingType: '开源免费',
+    searchKeyword: 'hermes-agent',
+    resourceSlug: 'gh-nousresearch-hermes-agent',
+    officialUrl: 'https://github.com/NousResearch/hermes-agent',
+  },
+  {
+    id: 'ui-tars-desktop',
+    name: 'UI-TARS Desktop',
+    category: 'desktop-agents',
+    tagline: '开源跨平台视觉 GUI 操作桌面端，通过屏幕截图直接理解界面并模拟键鼠点击，支持自定义模型。',
+    badges: ['开源 GUI 操作', '视觉屏幕理解', '跨平台桌面端'],
+    pricingType: '开源免费',
+    searchKeyword: 'UI-TARS',
+    officialUrl: 'https://github.com/bytedance/UI-TARS-desktop',
+  },
+  {
+    id: 'manus-ai',
+    name: 'Manus',
+    category: 'desktop-agents',
+    tagline: '开箱即用的云端自主执行 Agent，无需本地环境配置即可在云端沙箱完成调研、操作与报告交付。',
+    badges: ['云端沙箱执行', '零本地配置', '全流程交付'],
+    pricingType: '有免费额度',
+    searchKeyword: 'Manus',
+    officialUrl: 'https://manus.im',
+  },
+  {
+    id: 'todesk-ai',
+    name: 'ToDesk AI（桌面操作助手）',
+    category: 'desktop-agents',
+    tagline: '国内代表性 Computer Use 桌面工具，具备屏幕语义理解与真实键鼠接管能力，全程可视化执行。',
+    badges: ['国产直连', '真实键鼠接管', '可视化执行'],
+    pricingType: '有免费额度',
+    searchKeyword: 'Computer Use',
+    officialUrl: 'https://www.todesk.com',
+  },
+
   // 1. AI 编程全栈流 (coding)
   {
     id: 'claude-code',
@@ -294,7 +432,7 @@ export const NAV_TOOLS: NavTool[] = [
   },
   {
     id: 'meta-muse',
-    name: 'Meta Muse 系列（Muse Wonder / Spark）',
+    name: 'Meta Muse 模型 API',
     category: 'api-compute',
     tagline: 'Meta 新一代旗舰模型家族，长程推理与代码综合评测表现突出，适合高难度任务攻坚。',
     badges: ['综合榜单前列', '长程推理', '多规格可选'],
@@ -306,7 +444,7 @@ export const NAV_TOOLS: NavTool[] = [
   },
   {
     id: 'xai-grok',
-    name: 'xAI Grok 系列（Grok 4.7 & API）',
+    name: 'xAI Grok 模型 API',
     category: 'api-compute',
     tagline: '自带实时信息流优势，擅长高时效事件追踪、多智能体并发调用与长上下文推理。',
     badges: ['实时信息流', '高并发 API', '长上下文'],

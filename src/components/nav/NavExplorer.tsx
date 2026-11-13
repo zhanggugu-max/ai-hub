@@ -138,13 +138,13 @@ export function NavExplorer({ tools }: NavExplorerProps) {
     <div className="space-y-6">
       {/* 筛选与检索控制条 */}
       <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <Tabs
             value={activeCategory}
             onValueChange={(val) => setActiveCategory(val as 'all' | NavToolCategory)}
-            className="w-full lg:w-auto"
+            className="w-full xl:w-auto"
           >
-            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-slate-100 p-1 group-data-horizontal/tabs:h-auto lg:w-auto">
+            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-slate-100 p-1 group-data-horizontal/tabs:h-auto xl:w-auto">
               <TabsTrigger
                 value="all"
                 className="h-auto px-3 py-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-xs data-active:bg-white data-active:shadow-xs"

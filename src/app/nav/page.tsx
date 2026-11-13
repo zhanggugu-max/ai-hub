@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ChevronRight, Home, Layers } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { NAV_TOOLS } from '@/data/nav-tools';
+import { NAV_CATEGORIES, NAV_TOOLS } from '@/data/nav-tools';
 import { NavExplorer } from '@/components/nav/NavExplorer';
 import { ServiceSupportCard } from '@/components/monetization/ServiceSupportCard';
 import { getSiteUrl } from '@/lib/site-url';
@@ -11,16 +11,16 @@ const baseUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: '场景化 AI 工具导航：编程、工作流、算力与科研选型指南 | AI 智搜',
+  title: '场景化 AI 工具导航：桌面智能体、编程、工作流、算力与科研选型指南 | AI 智搜',
   description:
-    `拒绝网址堆砌，按真实开发与科研工作流精选 ${NAV_TOOLS.length} 款高频 AI 编程 Agent、Dify/n8n 工作流、API 算力底座与科研检索工具，附大白话选型建议与实战教程直达。`,
+    `拒绝网址堆砌，按真实开发与科研工作流精选 ${NAV_TOOLS.length} 款高口碑桌面自主智能体、AI 编程 Agent、Dify/n8n 工作流、API 算力底座与科研检索工具，附大白话选型建议与实战教程直达。`,
   alternates: {
     canonical: '/nav',
   },
   openGraph: {
     title: '场景化 AI 工具导航 | AI 智搜',
     description:
-      `四大场景精选 ${NAV_TOOLS.length} 款高口碑 AI 工具与大白话选型建议，直达站内深度教程与官方入口。`,
+      `${NAV_CATEGORIES.length} 大场景精选 ${NAV_TOOLS.length} 款高口碑 AI 工具与大白话选型建议，直达站内深度教程与官方入口。`,
     url: `${baseUrl}/nav`,
     siteName: 'AI 智搜',
     locale: 'zh_CN',
@@ -52,7 +52,7 @@ export default function NavPage() {
                 <span>场景化 AI 工具导航</span>
               </h1>
               <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-50">
-                4 大工作流场景 · {NAV_TOOLS.length} 款高口碑工具
+                {NAV_CATEGORIES.length} 大工作流场景 · {NAV_TOOLS.length} 款高口碑工具
               </Badge>
             </div>
             <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
