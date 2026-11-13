@@ -95,6 +95,9 @@ export default async function HomePage() {
             <Link href="/search" className="hover:text-blue-600">
               资料搜索
             </Link>
+            <Link href="/nav" className="hover:text-blue-600">
+              场景导航
+            </Link>
             <Link href="/leaderboard" className="hover:text-blue-600">
               能力排行榜
             </Link>

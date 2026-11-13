@@ -1,12 +1,9 @@
 import Link from 'next/link';
 import {
   BookOpen,
-  Compass,
   Cpu,
   FileText,
-  Search,
   Sparkles,
-  Trophy,
   Wrench,
   Zap,
 } from 'lucide-react';
@@ -25,46 +22,8 @@ const QUICK_CATEGORY_LINKS = [
 export function HeroSection() {
   return (
     <section className="border-b border-slate-200/80 bg-white">
-      {/* 顶部全局导航 */}
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="inline-flex items-center gap-2.5">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white shadow-xs">
-            <Compass className="h-5 w-5" />
-          </span>
-          <span className="flex items-baseline gap-2">
-            <span className="text-lg font-bold tracking-tight text-slate-900">AI 智搜</span>
-            <span className="hidden text-xs font-medium text-slate-400 sm:inline">
-              AISearchHub
-            </span>
-          </span>
-        </Link>
-
-        <nav aria-label="主导航" className="flex items-center gap-1.5 sm:gap-2">
-          <Link
-            href="/"
-            className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-900"
-          >
-            首页
-          </Link>
-          <Link
-            href="/search"
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-          >
-            <Search className="h-3.5 w-3.5" />
-            <span>资料搜索</span>
-          </Link>
-          <Link
-            href="/leaderboard"
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-          >
-            <Trophy className="h-3.5 w-3.5 text-amber-500" />
-            <span>能力榜单</span>
-          </Link>
-        </nav>
-      </div>
-
       {/* 居中 Hero 主视觉与搜索框 */}
-      <div className="mx-auto max-w-4xl px-4 pt-8 pb-12 text-center sm:px-6 sm:pt-12 sm:pb-14 lg:px-8">
+      <div className="mx-auto max-w-4xl px-4 pt-10 pb-12 text-center sm:px-6 sm:pt-14 sm:pb-14 lg:px-8">
         <Badge
           variant="secondary"
           className="mb-4 border border-blue-100 bg-blue-50/80 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50"

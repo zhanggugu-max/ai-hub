@@ -22,6 +22,7 @@ import { SourceMetaBanner } from './SourceMetaBanner';
 import { LeaderboardFilterBar } from './LeaderboardFilterBar';
 import { LeaderboardTable } from './LeaderboardTable';
 import { LeaderboardCardList } from './LeaderboardCardList';
+import { AffiliateApiBanner } from '@/components/monetization/AffiliateApiBanner';
 import { CompareFloatingBar } from './CompareFloatingBar';
 import { CompareDialog } from './CompareDialog';
 
@@ -284,6 +285,8 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
         onSortSelect={handleSortSelect}
         onReset={handleResetFilters}
       />
+
+      <AffiliateApiBanner />
 
       <LeaderboardTable
         category={filters.category}

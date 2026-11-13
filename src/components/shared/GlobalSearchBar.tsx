@@ -91,6 +91,7 @@ export function GlobalSearchBar({
             value={currentValue}
             onChange={(e) => updateValue(e.target.value)}
             placeholder={placeholder}
+            autoComplete="off"
             className={cn(
               isLarge
                 ? 'h-12 rounded-xl pr-10 pl-11 text-base'

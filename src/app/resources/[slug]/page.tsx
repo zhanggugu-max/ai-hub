@@ -10,6 +10,7 @@ import { ResourceHeader } from '@/components/resources/ResourceHeader';
 import { MarkdownRenderer } from '@/components/resources/MarkdownRenderer';
 import { ResourceSidebar } from '@/components/resources/ResourceSidebar';
 import { RelatedResources } from '@/components/resources/RelatedResources';
+import { ServiceSupportCard } from '@/components/monetization/ServiceSupportCard';
 import { getSiteUrl } from '@/lib/site-url';
 
 const baseUrl = getSiteUrl();
@@ -139,6 +140,8 @@ async function ResourceDetailContent({
         </div>
 
         <RelatedResources items={relatedItems} />
+
+        <ServiceSupportCard />
       </div>
     </>
   );
