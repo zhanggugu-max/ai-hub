@@ -11,9 +11,9 @@ const baseUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: '场景化 AI 工具导航：桌面智能体、编程、工作流、算力与科研选型指南 | AI 智搜',
+  title: '场景化 AI 工具导航：桌面智能体、编程、建站与多模态选型指南 | AI 智搜',
   description:
-    `拒绝网址堆砌，按真实开发与科研工作流精选 ${NAV_TOOLS.length} 款高口碑桌面自主智能体、AI 编程 Agent、Dify/n8n 工作流、API 算力底座与科研检索工具，附大白话选型建议与实战教程直达。`,
+    `拒绝网址堆砌，按真实开发、科研与创作工作流精选 ${NAV_TOOLS.length} 款高口碑桌面自主智能体、AI 编程 Agent、工作流编排、AI 建站原型、图像视频与音频效率工具，附大白话选型建议与实战教程直达。`,
   alternates: {
     canonical: '/nav',
   },

@@ -138,13 +138,13 @@ export function NavExplorer({ tools }: NavExplorerProps) {
     <div className="space-y-6">
       {/* 筛选与检索控制条 */}
       <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-col gap-3">
           <Tabs
             value={activeCategory}
             onValueChange={(val) => setActiveCategory(val as 'all' | NavToolCategory)}
-            className="w-full xl:w-auto"
+            className="w-full"
           >
-            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-slate-100 p-1 group-data-horizontal/tabs:h-auto xl:w-auto">
+            <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-slate-100 p-1 group-data-horizontal/tabs:h-auto">
               <TabsTrigger
                 value="all"
                 className="h-auto px-3 py-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-xs data-active:bg-white data-active:shadow-xs"
@@ -163,8 +163,8 @@ export function NavExplorer({ tools }: NavExplorerProps) {
             </TabsList>
           </Tabs>
 
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-            <div className="relative w-full sm:w-64">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:w-80">
               <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 type="search"
