@@ -6,7 +6,7 @@ import {
   Newspaper,
 } from 'lucide-react';
 import type { SearchItem } from '@/data/search/mock-data';
-import { formatSearchDate } from '@/lib/search/helpers';
+import { formatSearchDate, isRealExternalUrl } from '@/lib/search/helpers';
 import { ResourceTypeBadge } from '@/components/resources/ResourceTypeBadge';
 
 interface LatestResourcesProps {
@@ -97,15 +97,17 @@ export function LatestResources({ items }: LatestResourcesProps) {
                     <span>详情</span>
                     <ArrowRight className="h-3 w-3" />
                   </Link>
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer nofollow"
-                    className="inline-flex items-center gap-0.5 text-xs font-medium text-slate-500 hover:text-slate-800 hover:underline"
-                  >
-                    <span>原文</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                  {isRealExternalUrl(item.url) && (
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="inline-flex items-center gap-0.5 text-xs font-medium text-slate-500 hover:text-slate-800 hover:underline"
+                    >
+                      <span>原文</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
                 </div>
               </div>
             </article>

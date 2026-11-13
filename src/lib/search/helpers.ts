@@ -20,6 +20,18 @@ const TIME_RANGE_DAYS: Record<Exclude<SearchTimeRange, 'all'>, number> = {
   '90d': 90,
 };
 
+/** 校验是否为有效外部 HTTP(S) 链接（过滤空值及 example.com 占位域名） */
+export function isRealExternalUrl(url?: string | null): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url.trim());
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    return !/(^|\.)example\.com$/i.test(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 /** 固定 UTC+8 日期格式化，避免 SSR/CSR 水合不一致 */
 export function formatSearchDate(isoDate: string): string {
   const date = new Date(isoDate);

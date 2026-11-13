@@ -5,6 +5,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSlug from 'rehype-slug';
 import { BookOpenText, Check, Copy, ExternalLink, FileEdit } from 'lucide-react';
+import { isRealExternalUrl } from '@/lib/search/helpers';
 
 interface MarkdownRendererProps {
   content?: string;
@@ -175,15 +176,17 @@ export function MarkdownRenderer({
             </code>{' '}
             字段中直接填入 Markdown 教程、实操复盘或提示词模板。
           </p>
-          <a
-            href={externalUrl}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-600"
-          >
-            <span>先去原文官网查看</span>
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
+          {isRealExternalUrl(externalUrl) && (
+            <a
+              href={externalUrl}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-600"
+            >
+              <span>先去原文官网查看</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          )}
         </div>
       )}
     </article>

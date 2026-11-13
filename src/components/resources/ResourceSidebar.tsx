@@ -10,7 +10,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import type { SearchItem } from '@/data/search/mock-data';
-import { formatSearchDate } from '@/lib/search/helpers';
+import { formatSearchDate, isRealExternalUrl } from '@/lib/search/helpers';
 import { RESOURCE_TYPE_META } from './ResourceTypeBadge';
 
 interface ResourceSidebarProps {
@@ -27,7 +27,8 @@ function getSafeHostname(url: string): string {
 
 export function ResourceSidebar({ item }: ResourceSidebarProps) {
   const typeMeta = RESOURCE_TYPE_META[item.type];
-  const hostname = getSafeHostname(item.url);
+  const hasExternalUrl = isRealExternalUrl(item.url);
+  const hostname = hasExternalUrl ? getSafeHostname(item.url) : '站内原生收录';
 
   return (
     <aside className="space-y-4 lg:sticky lg:top-6">
@@ -35,30 +36,41 @@ export function ResourceSidebar({ item }: ResourceSidebarProps) {
       <div className="rounded-2xl border border-blue-200/80 bg-linear-to-br from-blue-50/80 via-white to-slate-50 p-5 shadow-2xs">
         <div className="flex items-center gap-2 text-xs font-semibold text-blue-700">
           <Globe className="h-4 w-4" />
-          <span>原文与官网直达</span>
+          <span>{hasExternalUrl ? '原文与官网直达' : '站内原创 / 精选整理'}</span>
         </div>
         <p className="mt-2 text-xs leading-relaxed text-slate-600">
-          点击下方按钮将跳转至外部原站获取完整文档、项目仓库或官方工具入口。
+          {hasExternalUrl
+            ? '点击下方按钮将跳转至外部原站获取完整文档、项目仓库或官方工具入口。'
+            : '本篇为站内整理指南或提示词模板，完整正本内容已直接展示在左侧阅读区。'}
         </p>
 
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-blue-700"
-        >
-          <span>访问原文官网</span>
-          <ExternalLink className="h-4 w-4" />
-        </a>
+        {hasExternalUrl ? (
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-blue-700"
+          >
+            <span>访问原文官网</span>
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        ) : (
+          <Link
+            href="/search"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-2xs transition-colors hover:bg-blue-50"
+          >
+            <span>浏览更多站内资料</span>
+          </Link>
+        )}
 
         <div className="mt-3 flex items-center justify-between rounded-lg bg-white/80 px-3 py-2 text-[11px] text-slate-500 ring-1 ring-slate-200/70">
-          <span className="shrink-0">目标域名</span>
+          <span className="shrink-0">来源归属</span>
           <span className="ml-2 truncate font-mono text-slate-700">{hostname}</span>
         </div>
 
         <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-slate-500">
           <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
-          <span>站内仅存储自编中文摘要、使用笔记与原文外链，版权归原作者及官网所有。</span>
+          <span>站内提供自编中文摘要、实操笔记与官方直达入口，版权归原作者及官网所有。</span>
         </p>
       </div>
 

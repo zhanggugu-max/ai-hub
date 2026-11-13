@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, Bookmark, ExternalLink, ShieldCheck, Wrench } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { SearchItem } from '@/data/search/mock-data';
+import { isRealExternalUrl } from '@/lib/search/helpers';
 
 interface HotToolsProps {
   tools: SearchItem[];
@@ -90,15 +91,17 @@ export function HotTools({ tools }: HotToolsProps) {
                   <span>详情</span>
                   <ArrowRight className="h-3 w-3" />
                 </Link>
-                <a
-                  href={tool.url}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  className="inline-flex items-center gap-0.5 text-xs font-medium text-slate-500 hover:text-slate-800 hover:underline"
-                >
-                  <span>直达</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
+                {isRealExternalUrl(tool.url) && (
+                  <a
+                    href={tool.url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="inline-flex items-center gap-0.5 text-xs font-medium text-slate-500 hover:text-slate-800 hover:underline"
+                  >
+                    <span>直达</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
               </div>
             </div>
           </article>

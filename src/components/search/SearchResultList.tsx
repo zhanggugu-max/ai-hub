@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import type { SearchItem } from '@/data/search/mock-data';
 import {
   formatSearchDate,
+  isRealExternalUrl,
   splitHighlightSegments,
 } from '@/lib/search/helpers';
 import { ResourceTypeBadge } from '@/components/resources/ResourceTypeBadge';
@@ -229,15 +230,17 @@ export function SearchResultList({
                       <ArrowRight className="h-3 w-3" />
                     </Link>
 
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer nofollow"
-                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900"
-                    >
-                      <span>原文</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
+                    {isRealExternalUrl(item.url) && (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                        className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900"
+                      >
+                        <span>原文</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
                   </div>
                 </div>
               </article>
