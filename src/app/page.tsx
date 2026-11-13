@@ -35,10 +35,18 @@ export default async function HomePage() {
     getSearchItems(),
   ]);
 
-  const hotTools = searchItems.filter((item) => item.type === 'tool').slice(0, 6);
+  const hotTools = searchItems
+    .filter((item) => item.type === 'tool')
+    .sort((a, b) => b.favoriteCount - a.favoriteCount)
+    .slice(0, 6);
   const latestResources = searchItems
     .filter((item) => item.type !== 'tool')
-    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+    .sort((a, b) => {
+      const aBoost = a.source === 'AI-Hub 精选' ? 1 : 0;
+      const bBoost = b.source === 'AI-Hub 精选' ? 1 : 0;
+      if (aBoost !== bBoost) return bBoost - aBoost;
+      return Date.parse(b.publishedAt) - Date.parse(a.publishedAt);
+    })
     .slice(0, 6);
   const hasMockNotice =
     snapshots.overall.isMockData || searchItems.some((item) => item.isMockData);
