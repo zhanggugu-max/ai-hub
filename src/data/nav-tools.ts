@@ -263,6 +263,38 @@ export const NAV_TOOLS: NavTool[] = [
     searchKeyword: 'Agent',
     officialUrl: 'https://github.com/steveyegge/gastown',
   },
+  {
+    id: 'tencent-workbuddy',
+    name: '腾讯 WorkBuddy',
+    category: 'desktop-agents',
+    tagline: '腾讯全场景桌面办公智能体，支持授权操作本地文档、代码开发与混元/DeepSeek 多模型自由切换。',
+    badges: ['腾讯出品', '本地文件读写', '多模型切换'],
+    pricingType: '有免费额度',
+    searchKeyword: 'WorkBuddy',
+    officialUrl: 'https://www.workbuddy.cn',
+    featured: true,
+  },
+  {
+    id: 'minimax-agent',
+    name: 'MiniMax Agent',
+    category: 'desktop-agents',
+    tagline: 'MiniMax 通用自主智能体工作台，支持多智能体协作、长程任务拆解与文档/网页/代码端到端交付。',
+    badges: ['通用自主执行', '多智能体协作', '国产直连'],
+    pricingType: '有免费额度',
+    searchKeyword: 'MiniMax',
+    officialUrl: 'https://agent.minimax.cn',
+  },
+  {
+    id: 'trycua-cua',
+    name: 'Cua（Computer-Use 2.0 沙箱）',
+    category: 'desktop-agents',
+    tagline: '开源跨系统桌面操控运行时（macOS/Windows/Linux），提供隔离沙箱与 MCP/CLI 让 Agent 接管桌面。',
+    badges: ['开源沙箱', 'Computer-Use 2.0', '跨系统操控'],
+    pricingType: '开源免费',
+    searchKeyword: 'cua',
+    resourceSlug: 'gh-trycua-cua',
+    officialUrl: 'https://github.com/trycua/cua',
+  },
 
   // 1. AI 编程全栈流 (coding)
   {
