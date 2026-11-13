@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type {
   LeaderboardCategory,
   LeaderboardEntry,
@@ -28,6 +30,7 @@ interface LeaderboardClientProps {
 }
 
 const MAX_COMPARE_COUNT = 4;
+const DEFAULT_VISIBLE_ROWS = 25;
 
 const VALID_CATEGORIES: LeaderboardCategory[] = ['overall', 'open_source', 'api_value'];
 const VALID_LICENSES: ('all' | LicenseType)[] = ['all', 'open_weights', 'proprietary'];
@@ -80,6 +83,7 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
   );
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [expandedAll, setExpandedAll] = useState(false);
   const urlTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeSnapshot = snapshots[filters.category];
@@ -132,6 +136,7 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
       category,
       provider: 'all',
     };
+    setExpandedAll(false);
     setFilters(next);
     scheduleUrlSync(next, true);
   };
@@ -201,6 +206,19 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
     [activeSnapshot.entries, filters]
   );
 
+  // 搜索或启用筛选时自动展示全部命中项；默认无筛选且数量较多时先展示前 25 款并可一键展开全部
+  const hasActiveCriteria =
+    filters.search.trim().length > 0 ||
+    filters.license !== 'all' ||
+    filters.provider !== 'all' ||
+    filters.minContextK > 0;
+
+  const canToggleExpand = !hasActiveCriteria && filteredEntries.length > DEFAULT_VISIBLE_ROWS;
+  const visibleEntries =
+    canToggleExpand && !expandedAll
+      ? filteredEntries.slice(0, DEFAULT_VISIBLE_ROWS)
+      : filteredEntries;
+
   /** 建立跨 Tab 的模型字典，切换榜单 Tab 时依然保留已勾选对比项 */
   const modelLookup = useMemo(() => {
     const map = new Map<string, LeaderboardEntry>();
@@ -261,7 +279,7 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
       />
 
       <LeaderboardTable
-        entries={filteredEntries}
+        entries={visibleEntries}
         sortKey={filters.sortKey}
         sortOrder={filters.sortOrder}
         onSort={handleSort}
@@ -272,12 +290,37 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
       />
 
       <LeaderboardCardList
-        entries={filteredEntries}
+        entries={visibleEntries}
         selectedSlugs={selectedSlugs}
         maxCompare={MAX_COMPARE_COUNT}
         onToggleCompare={handleToggleCompare}
         onResetFilters={handleResetFilters}
       />
+
+      {canToggleExpand && (
+        <div className="flex justify-center pt-1">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setExpandedAll((prev) => !prev)}
+            className="gap-1.5 rounded-xl border-slate-200 bg-white px-5 text-xs font-semibold text-slate-700 shadow-2xs hover:border-blue-300 hover:text-blue-600"
+          >
+            {expandedAll ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                <span>收起至前 {DEFAULT_VISIBLE_ROWS} 款模型</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                <span>
+                  展开全部 {filteredEntries.length} 款模型（当前显示前 {DEFAULT_VISIBLE_ROWS} 款）
+                </span>
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
       <footer className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-500">
         <strong className="font-medium text-slate-700">免责声明：</strong>

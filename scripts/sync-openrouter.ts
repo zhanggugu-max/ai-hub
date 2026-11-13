@@ -36,19 +36,27 @@ const OPENROUTER_MODELS_URL = 'https://openrouter.ai/api/v1/models';
 
 const METHODOLOGY_NOTES: Record<LeaderboardCategory, string> = {
   overall:
-    '数据自动同步自 OpenRouter 公开模型目录；综合能力分直接采用内嵌的 Artificial Analysis Intelligence Index（0–100 量纲，未做人为缩放），并按同子系列最优版本去重；API 价格由单 Token 定价乘以 1,000,000 统一换算为 USD/1M Tokens。',
+    '聚合 OpenRouter 公开目录中具备 Artificial Analysis（综合/代码/Agent 指数）或 DesignArena 盲测 Elo 任一权威评测数据的全部在役主流模型；优先直接采用 AA Intelligence Index（0–100 量纲），暂缺该字段的新模型按 AA Coding/Agentic 与 DesignArena Elo 保守折算并列展示；API 单价统一换算为 USD/1M Tokens。',
   open_source:
-    '自动筛选具备开源权重仓库（Hugging Face Hub ID）的主流模型；综合分直接采用 Artificial Analysis Intelligence Index，并保留代码（Coding Index）与 Agent 评测指标供私有化选型参考。',
+    '自动筛选具备开源权重仓库（Hugging Face Hub ID）且拥有 AA 指数或 DesignArena 盲测数据的全部主流开源模型（涵盖 DeepSeek、Qwen、Llama、GLM、Kimi 等），供本地/私有化部署选型对比。',
   api_value:
-    '筛选综合智力指数 ≥ 25 的主力商用与开源模型，按 1:3（输入:输出）加权均价结合能力/成本比（Intelligence Index / ∛均价）排序，突出高能力低成本模型。',
+    '筛选综合能力分 ≥ 12 的在役商用与开源模型，按 1:3（输入:输出）加权均价计算能力/成本比（能力分 / ∛均价）排序，全面呈现 DeepSeek、Qwen、GLM、Gemini Flash 等高性价比推理选择。',
 };
 
 const OFFICIAL_DISCLAIMER =
-  '本站榜单数据定时同步自 OpenRouter 公开模型接口与内嵌 Artificial Analysis 公开评测指数，仅供开发者学习与选型参考。由于 AI 模型迭代极快，且 API 计费受缓存折扣、区域节点及推理档位影响，具体性能表现与价格请务必以厂商官方最新页面为准。本站不对因使用该数据造成的任何决策损失负责。';
+  '本站榜单数据定时同步自 OpenRouter 公开模型接口与内嵌 Artificial Analysis / DesignArena 公开评测指标，仅供开发者学习与选型参考。由于 AI 模型迭代极快，且 API 计费受缓存折扣、区域节点及推理档位影响，具体性能表现与价格请务必以厂商官方最新页面为准。本站不对因使用该数据造成的任何决策损失负责。';
 
 interface OpenRouterPricing {
   prompt?: string;
   completion?: string;
+}
+
+interface DesignArenaEntry {
+  arena?: string;
+  category?: string;
+  elo?: number;
+  win_rate?: number;
+  rank?: number;
 }
 
 interface OpenRouterBenchmarks {
@@ -57,6 +65,7 @@ interface OpenRouterBenchmarks {
     coding_index?: number | null;
     agentic_index?: number | null;
   };
+  design_arena?: DesignArenaEntry[];
 }
 
 interface OpenRouterModelRaw {
@@ -82,9 +91,11 @@ interface NormalizedModel {
   provider: string;
   licenseType: LicenseType;
   licenseLabel: string;
-  intelligenceIndex: number;
+  overallScore: number;
+  hasOfficialAAIndex: boolean;
   codingIndex: number | null;
   agenticIndex: number | null;
+  designArenaElo: number | null;
   contextWindowK: number;
   inputPricePer1MUsd: number;
   outputPricePer1MUsd: number;
@@ -142,17 +153,77 @@ function extractProvider(rawId: string, rawName: string): string {
 }
 
 /**
- * 提取子系列归一键（例如将 claude-fable-5.2 与 claude-fable-5.1 归并，保留同系列最优版本，
- * 同时不误合并不同后缀定位如 gpt-6.1-sol / gpt-6.1-terra）。
+ * 同子系列微版本归并（如 claude-fable-5.2 与 5.1 归并保留最优，
+ * 同时保留 deepseek-v4-flash / deepseek-v3.2 / qwen3.8-27b / sol / terra 等不同型号）。
  */
 function getModelSeriesKey(id: string): string {
   return id.toLowerCase().replace(/([/-])(\d+(?:\.\d+)?)(?=-|$)/g, '$1*');
+}
+
+function computeDesignArenaAvgElo(entries?: DesignArenaEntry[]): number | null {
+  if (!Array.isArray(entries) || entries.length === 0) return null;
+  const elos = entries
+    .map((entry) => entry.elo)
+    .filter((v): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0);
+  if (elos.length === 0) return null;
+  const avg = elos.reduce((sum, v) => sum + v, 0) / elos.length;
+  return Math.round(avg);
+}
+
+/**
+ * 统一综合能力评分（0–100 量纲）：
+ * - 拥有官方 AA Intelligence Index 时直接原值返回；
+ * - 仅拥有 AA Coding/Agentic 或 DesignArena Elo 时，按同量纲经验回归保守折算（上限 45），
+ *   确保主流新模型（DeepSeek / Qwen / Llama 等）不失真且能公平上榜。
+ */
+function computeUnifiedOverallScore(params: {
+  intelligenceIndex: number | null;
+  codingIndex: number | null;
+  agenticIndex: number | null;
+  designArenaElo: number | null;
+}): { score: number; hasOfficialAAIndex: boolean } | null {
+  if (params.intelligenceIndex !== null) {
+    return {
+      score: Number(params.intelligenceIndex.toFixed(1)),
+      hasOfficialAAIndex: true,
+    };
+  }
+
+  let aaEst: number | null = null;
+  if (params.agenticIndex !== null && params.codingIndex !== null) {
+    aaEst = Math.max(3, 0.42 * params.agenticIndex + 0.16 * params.codingIndex - 2);
+  } else if (params.codingIndex !== null) {
+    aaEst = Math.max(3, 0.3 * params.codingIndex - 1);
+  } else if (params.agenticIndex !== null) {
+    aaEst = Math.max(3, 0.55 * params.agenticIndex);
+  }
+
+  const daEst =
+    params.designArenaElo !== null
+      ? Math.max(2, Math.min(44, (params.designArenaElo - 1020) / 6.8))
+      : null;
+
+  let combined: number | null = null;
+  if (aaEst !== null && daEst !== null) {
+    combined = 0.55 * aaEst + 0.45 * daEst;
+  } else {
+    combined = aaEst ?? daEst;
+  }
+
+  if (combined === null) return null;
+
+  return {
+    score: Number(Math.max(2, Math.min(45, combined)).toFixed(1)),
+    hasOfficialAAIndex: false,
+  };
 }
 
 function buildHighlights(params: {
   contextK: number;
   codingIndex: number | null;
   agenticIndex: number | null;
+  designArenaElo: number | null;
+  hasOfficialAAIndex: boolean;
   inputModalities: string[];
   licenseType: LicenseType;
   blendedPrice: number;
@@ -165,27 +236,35 @@ function buildHighlights(params: {
     tags.push('超长上下文');
   }
 
-  if (params.codingIndex !== null && params.codingIndex >= 70) {
-    tags.push('代码能力强');
+  if (params.codingIndex !== null && params.codingIndex >= 55) {
+    tags.push('代码强项');
   }
 
-  if (params.agenticIndex !== null && params.agenticIndex >= 50) {
+  if (params.agenticIndex !== null && params.agenticIndex >= 40) {
     tags.push('Agent优势');
   }
 
-  if (
-    params.inputModalities.includes('image') ||
-    params.inputModalities.includes('video')
-  ) {
-    tags.push('多模态输入');
+  if (params.designArenaElo !== null) {
+    tags.push(`DA:${params.designArenaElo}`);
   }
 
   if (params.licenseType === 'open_weights') {
     tags.push('开源权重');
   }
 
+  if (
+    params.inputModalities.includes('image') ||
+    params.inputModalities.includes('video')
+  ) {
+    tags.push('多模态');
+  }
+
   if (params.blendedPrice > 0 && params.blendedPrice <= 0.5) {
     tags.push('超低成本');
+  }
+
+  if (!params.hasOfficialAAIndex && tags.length < 3) {
+    tags.push('多指标折算');
   }
 
   return Array.from(new Set(tags)).slice(0, 3);
@@ -222,11 +301,6 @@ async function fetchBenchmarkedOpenRouterModels(): Promise<NormalizedModel[]> {
   for (const m of rawModels) {
     if (isNoiseVariant(m)) continue;
 
-    const aa = m.benchmarks?.artificial_analysis;
-    if (typeof aa?.intelligence_index !== 'number' || !Number.isFinite(aa.intelligence_index)) {
-      continue;
-    }
-
     const promptPerToken = Number(m.pricing?.prompt);
     const completionPerToken = Number(m.pricing?.completion);
     if (
@@ -238,19 +312,34 @@ async function fetchBenchmarkedOpenRouterModels(): Promise<NormalizedModel[]> {
       continue;
     }
 
+    const aa = m.benchmarks?.artificial_analysis;
+    const intelligenceIndex =
+      typeof aa?.intelligence_index === 'number' && Number.isFinite(aa.intelligence_index)
+        ? aa.intelligence_index
+        : null;
+    const codingIndex =
+      typeof aa?.coding_index === 'number' && Number.isFinite(aa.coding_index)
+        ? aa.coding_index
+        : null;
+    const agenticIndex =
+      typeof aa?.agentic_index === 'number' && Number.isFinite(aa.agentic_index)
+        ? aa.agentic_index
+        : null;
+    const designArenaElo = computeDesignArenaAvgElo(m.benchmarks?.design_arena);
+
+    const unified = computeUnifiedOverallScore({
+      intelligenceIndex,
+      codingIndex,
+      agenticIndex,
+      designArenaElo,
+    });
+    if (!unified) continue;
+
     const inputPer1M = roundUsd(promptPerToken * 1_000_000);
     const outputPer1M = roundUsd(completionPerToken * 1_000_000);
     const blendedPrice = (inputPer1M + 3 * outputPer1M) / 4;
     const contextK = Math.max(1, Math.round((m.context_length ?? 0) / 1000));
     const isOpen = Boolean(m.hugging_face_id);
-    const codingIndex =
-      typeof aa.coding_index === 'number' && Number.isFinite(aa.coding_index)
-        ? aa.coding_index
-        : null;
-    const agenticIndex =
-      typeof aa.agentic_index === 'number' && Number.isFinite(aa.agentic_index)
-        ? aa.agentic_index
-        : null;
 
     normalized.push({
       modelSlug: m.id,
@@ -259,9 +348,11 @@ async function fetchBenchmarkedOpenRouterModels(): Promise<NormalizedModel[]> {
       provider: extractProvider(m.id, m.name),
       licenseType: isOpen ? 'open_weights' : 'proprietary',
       licenseLabel: isOpen ? 'Open Weights' : 'Proprietary',
-      intelligenceIndex: Number(aa.intelligence_index.toFixed(1)),
+      overallScore: unified.score,
+      hasOfficialAAIndex: unified.hasOfficialAAIndex,
       codingIndex: codingIndex !== null ? Number(codingIndex.toFixed(1)) : null,
       agenticIndex: agenticIndex !== null ? Number(agenticIndex.toFixed(1)) : null,
+      designArenaElo,
       contextWindowK: contextK,
       inputPricePer1MUsd: inputPer1M,
       outputPricePer1MUsd: outputPer1M,
@@ -270,6 +361,8 @@ async function fetchBenchmarkedOpenRouterModels(): Promise<NormalizedModel[]> {
         contextK,
         codingIndex,
         agenticIndex,
+        designArenaElo,
+        hasOfficialAAIndex: unified.hasOfficialAAIndex,
         inputModalities: m.architecture?.input_modalities ?? [],
         licenseType: isOpen ? 'open_weights' : 'proprietary',
         blendedPrice,
@@ -330,32 +423,34 @@ interface BoardSpec {
 
 async function main() {
   const startedAt = new Date();
-  console.log('🚀 开始从 OpenRouter 同步最新大模型榜单...');
+  console.log('🚀 开始从 OpenRouter 同步全量多维度基准榜单...');
 
   try {
     const allModels = await fetchBenchmarkedOpenRouterModels();
-    if (allModels.length < 5) {
+    if (allModels.length < 20) {
       throw new Error(`有效基准模型数量异常过少 (${allModels.length})，中止覆盖以保护线上快照`);
     }
 
-    const byIntelligenceDesc = [...allModels].sort(
-      (a, b) => b.intelligenceIndex - a.intelligenceIndex
-    );
+    const byOverallDesc = [...allModels].sort((a, b) => {
+      if (b.overallScore !== a.overallScore) return b.overallScore - a.overallScore;
+      return (b.codingIndex ?? 0) - (a.codingIndex ?? 0);
+    });
 
-    const overallModels = deduplicateBySeries(byIntelligenceDesc).slice(0, 12);
+    // 废除旧的 12/10 小截断：完整保留全量去重后的主流模型（上限放宽至 150 条）
+    const overallModels = deduplicateBySeries(byOverallDesc).slice(0, 150);
 
     const openSourceModels = deduplicateBySeries(
-      byIntelligenceDesc.filter((m) => m.licenseType === 'open_weights')
-    ).slice(0, 10);
+      byOverallDesc.filter((m) => m.licenseType === 'open_weights')
+    ).slice(0, 150);
 
     const apiValueCandidates = allModels
-      .filter((m) => m.intelligenceIndex >= 25 && m.blendedPricePer1MUsd > 0)
+      .filter((m) => m.overallScore >= 12 && m.blendedPricePer1MUsd > 0)
       .sort((a, b) => {
-        const valueA = a.intelligenceIndex / Math.cbrt(a.blendedPricePer1MUsd);
-        const valueB = b.intelligenceIndex / Math.cbrt(b.blendedPricePer1MUsd);
+        const valueA = a.overallScore / Math.cbrt(a.blendedPricePer1MUsd);
+        const valueB = b.overallScore / Math.cbrt(b.blendedPricePer1MUsd);
         return valueB - valueA;
       });
-    const apiValueModels = deduplicateBySeries(apiValueCandidates).slice(0, 10);
+    const apiValueModels = deduplicateBySeries(apiValueCandidates).slice(0, 150);
 
     const boards: BoardSpec[] = [
       {
@@ -363,7 +458,7 @@ async function main() {
         title: 'AI 大模型综合能力榜',
         shortLabel: '综合能力',
         description:
-          '实时追踪 OpenRouter 最新在役旗舰模型，基于 Artificial Analysis 综合智力指数与官方上下文/API 单价整理。',
+          '全量收录具备 Artificial Analysis（综合/代码/Agent）或 DesignArena 盲测评测数据的在役模型。',
         models: overallModels,
       },
       {
@@ -371,7 +466,7 @@ async function main() {
         title: '开源大模型能力榜',
         shortLabel: '开源模型',
         description:
-          '自动筛选具备开源权重（Hugging Face Hub）的最新模型，呈现能力得分、代码能力与 API 托管成本。',
+          '覆盖 Hugging Face 开源权重全系主力（DeepSeek / Qwen / Llama / GLM / Kimi 等）及 API 成本。',
         models: openSourceModels,
       },
       {
@@ -379,7 +474,7 @@ async function main() {
         title: 'API 性价比排行榜',
         shortLabel: 'API 性价比',
         description:
-          '基于模型综合智力指数与 1:3 输入输出加权单价排序，快速发现高性价比与高能效推理主力。',
+          '基于综合能力分与 1:3 输入输出加权单价排序，全面对比高性价比 API 与开源托管选择。',
         models: apiValueModels,
       },
     ];
@@ -391,7 +486,6 @@ async function main() {
     for (const board of boards) {
       if (board.models.length === 0) continue;
 
-      // 先以 is_latest: false 插入新快照与模型行，确认无误后再原子切换 is_latest，防止切换瞬间出现空榜
       const { data: insertedSnap, error: snapErr } = await supabase
         .from('leaderboard_snapshots')
         .insert({
@@ -399,7 +493,7 @@ async function main() {
           title: board.title,
           short_label: board.shortLabel,
           description: board.description,
-          source_name: 'OpenRouter 模型目录 · Artificial Analysis 公开指数',
+          source_name: 'OpenRouter 模型目录 · AA & DesignArena 多源评测',
           source_url: 'https://openrouter.ai/rankings',
           is_mock_data: false,
           methodology_note: METHODOLOGY_NOTES[board.category],
@@ -423,8 +517,8 @@ async function main() {
         const rankDelta = hasPrevSnapshot
           ? prevRank !== undefined
             ? prevRank - rank
-            : null // 较上期新上榜 -> 前端渲染 NEW
-          : 0; // 首次建榜 -> 持平
+            : null
+          : 0;
 
         return {
           snapshot_id: insertedSnap.id,
@@ -436,7 +530,7 @@ async function main() {
           license_label: m.licenseLabel,
           rank,
           rank_delta: rankDelta,
-          score_overall: m.intelligenceIndex,
+          score_overall: m.overallScore,
           score_coding: m.codingIndex,
           score_math: null,
           score_reasoning: m.agenticIndex,
@@ -476,10 +570,13 @@ async function main() {
       }
 
       totalUpserted += modelRows.length;
+      const deepseekCount = board.models.filter((m) =>
+        m.modelSlug.toLowerCase().includes('deepseek')
+      ).length;
       console.log(
-        `✅ [${board.category}] 已激活新快照 (${modelRows.length} 款)，Top 3: ${board.models
+        `✅ [${board.category}] 已激活新快照 (${modelRows.length} 款，含 DeepSeek ${deepseekCount} 款)，Top 3: ${board.models
           .slice(0, 3)
-          .map((m) => `${m.modelName}(${m.intelligenceIndex})`)
+          .map((m) => `${m.modelName}(${m.overallScore})`)
           .join(' / ')}`
       );
     }
@@ -501,7 +598,7 @@ async function main() {
     }
 
     console.log(
-      `\n🎉 同步完成！共抓取含基准模型 ${allModels.length} 款，写入三大榜单共 ${totalUpserted} 条记录。`
+      `\n🎉 多源扩榜同步完成！共捕获有权威基准模型 ${allModels.length} 款，三大榜单累计写入 ${totalUpserted} 条记录。`
     );
   } catch (err) {
     const finishedAt = new Date();
