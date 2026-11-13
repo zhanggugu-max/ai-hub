@@ -13,14 +13,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: '场景化 AI 工具导航：编程、工作流、算力与科研选型指南 | AI 智搜',
   description:
-    '拒绝网址堆砌，按真实开发与科研工作流精选 AI 编程 Agent、Dify/n8n 工作流、API 算力底座与科研检索工具，附大白话选型建议与实战教程直达。',
+    `拒绝网址堆砌，按真实开发与科研工作流精选 ${NAV_TOOLS.length} 款高频 AI 编程 Agent、Dify/n8n 工作流、API 算力底座与科研检索工具，附大白话选型建议与实战教程直达。`,
   alternates: {
     canonical: '/nav',
   },
   openGraph: {
     title: '场景化 AI 工具导航 | AI 智搜',
     description:
-      '四大场景精选高频 AI 工具与大白话选型建议，直达站内深度教程与官方入口。',
+      `四大场景精选 ${NAV_TOOLS.length} 款高口碑 AI 工具与大白话选型建议，直达站内深度教程与官方入口。`,
     url: `${baseUrl}/nav`,
     siteName: 'AI 智搜',
     locale: 'zh_CN',
