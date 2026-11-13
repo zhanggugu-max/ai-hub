@@ -239,15 +239,14 @@ function arenaSubEloTo100(elo: number): number {
 }
 
 function aaIndexTo100(aaIndex: number): number {
-  return clamp(5, 99.0, 55 + 0.62 * aaIndex);
+  return clamp(5, 96.0, 68 + 0.43 * aaIndex);
 }
 
 /**
  * 统一综合能力评分（0–100 量纲）：
- * - 同时拥有 LMArena Overall Elo 与 AA Intelligence Index：75% LMArena + 25% AA；
- * - 仅拥有 LMArena Overall Elo：直接按 LMArena 映射分展示；
- * - 仅拥有 AA Intelligence Index（如刚发布的未入 Arena 新模型）：按校准后 AA 分展示；
- * - 仅拥有 AA Coding/Agentic 或 DesignArena Elo：按经验回归映射到合理区间（上限 72）。
+ * - 拥有 LMArena Overall Elo 时直接按 LMArena Elo 单调映射（避免旧模型因缺失 AA 指标而反超新模型）；
+ * - 暂未收录进 LMArena 但拥有 AA Intelligence Index 的超新模型，按经验回归曲线校准映射；
+ * - 仅拥有 AA Coding/Agentic 或 DesignArena Elo 时，按保守经验回归映射到合理区间（上限 72）。
  */
 function computeUnifiedScores(params: {
   lmArena: LmArenaModelScores | null;
@@ -271,9 +270,7 @@ function computeUnifiedScores(params: {
     params.intelligenceIndex !== null ? aaIndexTo100(params.intelligenceIndex) : null;
 
   let overallScore: number | null = null;
-  if (arenaScore !== null && aaScore !== null) {
-    overallScore = 0.75 * arenaScore + 0.25 * aaScore;
-  } else if (arenaScore !== null) {
+  if (arenaScore !== null) {
     overallScore = arenaScore;
   } else if (aaScore !== null) {
     overallScore = aaScore;
@@ -299,16 +296,12 @@ function computeUnifiedScores(params: {
 
   if (overallScore === null) return null;
 
-  let codingScore: number | null = null;
-  if (lmCodingElo !== null && params.codingIndex !== null) {
-    codingScore = Number(
-      (0.7 * arenaSubEloTo100(lmCodingElo) + 0.3 * clamp(5, 98, 42 + 0.58 * params.codingIndex)).toFixed(1)
-    );
-  } else if (lmCodingElo !== null) {
-    codingScore = arenaSubEloTo100(lmCodingElo);
-  } else if (params.codingIndex !== null) {
-    codingScore = Number(params.codingIndex.toFixed(1));
-  }
+  const codingScore =
+    lmCodingElo !== null
+      ? arenaSubEloTo100(lmCodingElo)
+      : params.codingIndex !== null
+        ? Number(clamp(5, 96, 46 + 0.52 * params.codingIndex).toFixed(1))
+        : null;
 
   const mathScore = lmMathElo !== null ? arenaSubEloTo100(lmMathElo) : null;
   const reasoningScore =
@@ -759,7 +752,10 @@ async function main() {
     const overallModels = [...allModels]
       .sort((a, b) => {
         if (b.overallScore !== a.overallScore) return b.overallScore - a.overallScore;
-        return (b.lmArenaElo ?? 0) - (a.lmArenaElo ?? 0);
+        if ((b.lmArenaElo ?? 0) !== (a.lmArenaElo ?? 0)) {
+          return (b.lmArenaElo ?? 0) - (a.lmArenaElo ?? 0);
+        }
+        return b.createdAt - a.createdAt;
       })
       .slice(0, 250);
 
