@@ -4,6 +4,7 @@ import {
   type SearchItem,
   type SearchItemType,
 } from '@/data/search/mock-data';
+import { SITE_BRAND } from '@/config/brand';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 interface DbResourceRow {
@@ -37,17 +38,21 @@ const LIST_SELECT_COLUMNS =
 
 const DETAIL_SELECT_COLUMNS = `${LIST_SELECT_COLUMNS}, content`;
 
+function normalizeBrandText(text: string): string {
+  return text.replace(/AI\s*智搜/g, SITE_BRAND.name).replace(/AISearchHub/gi, SITE_BRAND.name);
+}
+
 function mapDbRowToSearchItem(row: DbResourceRow): SearchItem {
   return {
     id: row.slug,
     type: row.type,
-    title: row.title,
+    title: normalizeBrandText(row.title),
     originalTitle: row.original_title ?? undefined,
-    description: row.description,
-    content: row.content ?? undefined,
+    description: normalizeBrandText(row.description),
+    content: row.content ? normalizeBrandText(row.content) : undefined,
     tags: Array.isArray(row.tags) ? row.tags : [],
-    source: row.source,
-    author: row.author,
+    source: normalizeBrandText(row.source),
+    author: normalizeBrandText(row.author),
     publishedAt: row.published_at,
     updatedAt: row.updated_at,
     url: row.url,
