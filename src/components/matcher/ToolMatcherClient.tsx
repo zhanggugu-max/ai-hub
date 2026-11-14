@@ -9,6 +9,7 @@ import {
   BookOpenText,
   CheckCircle2,
   ExternalLink,
+  Image as ImageIcon,
   Info,
   Loader2,
   RotateCcw,
@@ -17,6 +18,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ServiceSupportCard } from '@/components/monetization/ServiceSupportCard';
+import { ShareImageModal } from '@/components/share/SharePosterPrimitives';
+import { MatcherSharePoster } from './MatcherSharePoster';
+import { exportElementToPng } from '@/lib/share-image';
 import { NAV_CATEGORIES, type NavTool, type NavToolPricing } from '@/data/nav-tools';
 import {
   computeToolMatches,
@@ -41,12 +45,19 @@ function getCategoryLabel(catValue: string): string {
   return NAV_CATEGORIES.find((c) => c.value === catValue)?.label ?? catValue;
 }
 
+const MATCHER_SHARE_FILENAME = '海兰AI_专属匹配报告.png';
+
 export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [answers, setAnswers] = useState<MatcherAnswers>({});
   const [phase, setPhase] = useState<'quiz' | 'matching' | 'result'>('quiz');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [shareDataUrl, setShareDataUrl] = useState<string | null>(null);
+  const [shareIsMobile, setShareIsMobile] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resultSectionRef = useRef<HTMLElement | null>(null);
+  const posterRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     return () => {
@@ -110,7 +121,27 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
     }
     setAnswers({});
     setCurrentStepIndex(0);
+    setShareDataUrl(null);
+    setShareError(null);
     setPhase('quiz');
+  };
+
+  const handleSaveShareCard = async () => {
+    if (isGenerating || !posterRef.current) return;
+    setIsGenerating(true);
+    setShareError(null);
+    try {
+      const result = await exportElementToPng(posterRef.current, MATCHER_SHARE_FILENAME, {
+        backgroundColor: '#F8FAFC',
+        pixelRatio: 2,
+      });
+      setShareDataUrl(result.dataUrl);
+      setShareIsMobile(result.isMobile);
+    } catch {
+      setShareError('图片生成失败，请稍后重试');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -264,17 +295,40 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
               ))}
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleReset}
-              className="shrink-0 gap-1.5 self-start sm:self-auto"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span>重新测试</span>
-            </Button>
+            <div className="flex shrink-0 flex-wrap items-center gap-2 self-start sm:self-auto">
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSaveShareCard}
+                disabled={isGenerating}
+                className="gap-1.5 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 text-white shadow-xs transition-all hover:from-blue-700 hover:via-sky-600 hover:to-cyan-600"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ImageIcon className="h-3.5 w-3.5" />
+                )}
+                <span>{isGenerating ? '正在生成卡片...' : '保存结果卡片'}</span>
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleReset}
+                className="gap-1.5"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span>重新测试</span>
+              </Button>
+            </div>
           </div>
+
+          {shareError && (
+            <p className="text-xs font-medium text-rose-600" role="status">
+              {shareError}
+            </p>
+          )}
 
           {/* Top 1 · 主推首选卡片 */}
           <article className="rounded-xl border-2 border-blue-400 bg-gradient-to-br from-white via-white to-blue-50/50 p-6 shadow-xs">
@@ -455,6 +509,22 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
           </div>
 
           <ServiceSupportCard />
+
+          <MatcherSharePoster
+            posterRef={posterRef}
+            profileTags={selectedProfileTags.map((item) => item.tag)}
+            topOne={topOne}
+            alternatives={alternatives}
+          />
+
+          <ShareImageModal
+            open={Boolean(shareDataUrl)}
+            dataUrl={shareDataUrl}
+            fileName={MATCHER_SHARE_FILENAME}
+            title="海兰 AI · 专属匹配报告"
+            isMobile={shareIsMobile}
+            onClose={() => setShareDataUrl(null)}
+          />
         </section>
       )}
     </div>

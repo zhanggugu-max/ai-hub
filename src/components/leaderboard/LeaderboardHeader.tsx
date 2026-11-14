@@ -7,13 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import {
   LEADERBOARD_CATEGORIES,
   type LeaderboardCategory,
+  type LeaderboardSnapshot,
 } from '@/data/leaderboard/mock-data';
+import { LeaderboardShareButton } from './LeaderboardShareButton';
 
 interface LeaderboardHeaderProps {
   activeCategory: LeaderboardCategory;
   onCategoryChange: (category: LeaderboardCategory) => void;
   title: string;
   description: string;
+  snapshot: LeaderboardSnapshot;
 }
 
 const CATEGORY_ICONS: Record<LeaderboardCategory, React.ReactNode> = {
@@ -27,6 +30,7 @@ export function LeaderboardHeader({
   onCategoryChange,
   title,
   description,
+  snapshot,
 }: LeaderboardHeaderProps) {
   return (
     <header className="space-y-4">
@@ -55,6 +59,10 @@ export function LeaderboardHeader({
             </Badge>
           </div>
           <p className="max-w-3xl text-sm text-slate-600 sm:text-base">{description}</p>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <LeaderboardShareButton snapshot={snapshot} />
         </div>
       </div>
 

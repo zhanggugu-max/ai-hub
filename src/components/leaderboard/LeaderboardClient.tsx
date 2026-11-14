@@ -271,6 +271,7 @@ export function LeaderboardClient({ snapshots }: LeaderboardClientProps) {
         onCategoryChange={handleCategoryChange}
         title={activeSnapshot.title}
         description={activeSnapshot.description}
+        snapshot={activeSnapshot}
       />
 
       <SourceMetaBanner snapshot={activeSnapshot} />

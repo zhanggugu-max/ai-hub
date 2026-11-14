@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import type { LeaderboardSnapshot } from '@/data/leaderboard/mock-data';
 import { formatUpdatedTime } from '@/lib/leaderboard/helpers';
 import { LeaderboardTopCard } from '@/components/leaderboard/LeaderboardTopCard';
+import { LeaderboardShareButton } from '@/components/leaderboard/LeaderboardShareButton';
 
 interface LeaderboardPreviewProps {
   snapshot: LeaderboardSnapshot;
@@ -44,6 +45,7 @@ export function LeaderboardPreview({ snapshot }: LeaderboardPreviewProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <LeaderboardShareButton snapshot={snapshot} />
           <Link
             href="/leaderboard?board=api_value"
             className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-2xs transition-colors hover:border-blue-300 hover:text-blue-600"
