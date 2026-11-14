@@ -95,6 +95,9 @@ export default async function HomePage() {
             <Link href="/guide" className="hover:text-blue-600">
               新手教程
             </Link>
+            <Link href="/matcher" className="hover:text-blue-600">
+              AI 选型测试
+            </Link>
             <Link href="/search" className="hover:text-blue-600">
               资料搜索
             </Link>

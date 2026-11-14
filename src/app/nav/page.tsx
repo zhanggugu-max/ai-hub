@@ -58,6 +58,16 @@ export default function NavPage() {
             <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
               拒绝千篇一律的网址堆砌，按真实开发与科研工作流精选高口碑工具，附大白话选型建议与实战教程。
             </p>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-200/80 bg-gradient-to-r from-violet-50/70 via-white to-blue-50/70 px-4 py-2.5 text-xs text-slate-700 sm:text-sm">
+              <span>不知道 {NAV_TOOLS.length} 款工具选哪个？</span>
+              <Link
+                href="/matcher"
+                className="inline-flex items-center gap-1 font-semibold text-violet-700 transition-colors hover:text-violet-800 hover:underline"
+              >
+                <span>👉 花 30 秒做个需求小测试，帮你匹配顺手工具 →</span>
+              </Link>
+            </div>
           </div>
         </header>
 

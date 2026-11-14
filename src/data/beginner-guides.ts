@@ -79,6 +79,7 @@ export const GUIDE_STEPS: GuideStep[] = [
         ],
         tip: '避坑提示：国内日常查资料、写中文文案首选国产直连工具（免折腾网络，免费额度也很够用）；只有遇到极高难度系统架构、复杂代码重构时，再按需切到海外旗舰模型。',
         links: [
+          { label: '不知道选哪个？做 30 秒 AI 选型测试', href: '/matcher' },
           { label: '逛场景化 AI 工具导航', href: '/nav' },
           { label: '看最新 AI 能力榜单', href: '/leaderboard' },
         ],

@@ -10,6 +10,7 @@ import {
   Menu,
   Search,
   Trophy,
+  Wand2,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -31,6 +32,13 @@ const NAV_LINKS: NavLinkItem[] = [
     icon: GraduationCap,
     iconClass: 'text-emerald-600',
     match: (p: string) => p.startsWith('/guide'),
+  },
+  {
+    href: '/matcher',
+    label: 'AI 选型测试',
+    icon: Wand2,
+    iconClass: 'text-violet-600',
+    match: (p: string) => p.startsWith('/matcher'),
   },
   {
     href: '/search',
@@ -130,7 +138,6 @@ export function SiteHeader() {
                   onClick={() => setMobileOpen(false)}
                   className={cn(
                     'inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm transition-colors',
-                    item.href === '/' && 'col-span-2',
                     active
                       ? 'bg-slate-100 font-semibold text-slate-900'
                       : 'font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900'
