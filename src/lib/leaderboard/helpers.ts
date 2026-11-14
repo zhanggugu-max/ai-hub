@@ -276,3 +276,24 @@ export function getBestCompareMetrics(entries: LeaderboardEntry[]): BestCompareM
     maxSpeed: findDistinctBest(entries.map((e) => e.speedTokensPerSec), 'max'),
   };
 }
+
+/** 从快照来源名称中提取来源数据发布日期（未记录时返回 null，绝不编造） */
+export function extractSourceReleaseDate(sourceName: string): string | null {
+  const match = sourceName.match(/\((\d{4}-\d{2}-\d{2})\)/);
+  return match?.[1] ?? null;
+}
+
+/** 提取真实记录的推理/测试配置档位（例如 LiveBench 的 xhigh / high / max） */
+export function extractEvalConfig(entry: LeaderboardEntry): string | null {
+  const tag = entry.highlights.find((item) => item.startsWith('测试配置:'));
+  if (!tag) return null;
+  const value = tag.slice('测试配置:'.length).trim();
+  return value.length > 0 ? value : null;
+}
+
+/** 过滤内部元数据前缀标签后返回可展示亮点标签 */
+export function getVisibleHighlights(highlights: string[], max = 2): string[] {
+  return highlights
+    .filter((tag) => !tag.startsWith('测试配置:'))
+    .slice(0, max);
+}

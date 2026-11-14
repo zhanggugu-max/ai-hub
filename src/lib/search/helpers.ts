@@ -96,6 +96,42 @@ export function getTypeCounts(
   return counts;
 }
 
+const SEARCH_PHRASE_SYNONYMS: Array<{ phrase: string; terms: string[] }> = [
+  {
+    phrase: '写代码',
+    terms: ['写代码', '代码', '编程', 'coding', 'code', 'cursor', 'copilot', 'ide', '单元测试'],
+  },
+  {
+    phrase: '做 ppt',
+    terms: ['做 ppt', 'ppt', '演示', '幻灯片', '大纲', '文档', 'prd', '汇报'],
+  },
+  {
+    phrase: '做ppt',
+    terms: ['做ppt', 'ppt', '演示', '幻灯片', '大纲', '文档', 'prd', '汇报'],
+  },
+  {
+    phrase: '读论文',
+    terms: ['读论文', '论文', 'arxiv', '文献', '研读', 'pdf', '科研'],
+  },
+  {
+    phrase: '做视频',
+    terms: ['做视频', '视频', '多模态', 'kling', 'runway', 'veo', 'sora', '剪辑', '视觉'],
+  },
+  {
+    phrase: '自动化办公',
+    terms: ['自动化办公', '自动化', '办公', '工作流', 'workflow', 'dify', 'n8n', 'coze', 'bot'],
+  },
+];
+
+const SEARCH_TOKEN_SYNONYMS: Record<string, string[]> = {
+  ppt: ['ppt', '演示', '幻灯片', '大纲', '文档', 'prd', '汇报'],
+  论文: ['论文', 'arxiv', '文献', '研读', 'pdf', '科研'],
+  视频: ['视频', '多模态', 'kling', 'runway', 'veo', 'sora', '剪辑', '视觉'],
+  编程: ['编程', '代码', 'coding', 'code', 'cursor', 'ide'],
+  代码: ['代码', '编程', 'coding', 'code', 'cursor', 'ide'],
+  自动化: ['自动化', '办公', '工作流', 'workflow', 'dify', 'n8n', 'coze'],
+};
+
 /** 拆词工具：按空白拆分为去重小写关键词 */
 export function tokenizeSearchQuery(query: string): string[] {
   return Array.from(
@@ -109,9 +145,37 @@ export function tokenizeSearchQuery(query: string): string[] {
   );
 }
 
+/** 将搜索词解析为“每组内部 OR、组间 AND”的检索同义词组，确保新手高频场景词不返回空结果 */
+export function buildSearchTokenGroups(query: string): string[][] {
+  let remaining = query.trim().toLowerCase();
+  if (!remaining) return [];
+
+  const groups: string[][] = [];
+  for (const entry of SEARCH_PHRASE_SYNONYMS) {
+    if (remaining.includes(entry.phrase)) {
+      groups.push(entry.terms);
+      remaining = remaining.replaceAll(entry.phrase, ' ').trim();
+    }
+  }
+
+  for (const token of tokenizeSearchQuery(remaining)) {
+    const mapped = SEARCH_TOKEN_SYNONYMS[token];
+    groups.push(mapped ? mapped : [token]);
+  }
+
+  return groups;
+}
+
 /** 计算简单相关性得分（标题权重 > 标签 > 原题/作者/来源 > 摘要） */
-export function computeRelevanceScore(item: SearchItem, tokens: string[]): number {
-  if (tokens.length === 0) return 0;
+export function computeRelevanceScore(
+  item: SearchItem,
+  tokensOrGroups: string[] | string[][]
+): number {
+  if (tokensOrGroups.length === 0) return 0;
+
+  const groups: string[][] = Array.isArray(tokensOrGroups[0])
+    ? (tokensOrGroups as string[][])
+    : (tokensOrGroups as string[]).map((t) => [t]);
 
   const title = item.title.toLowerCase();
   const originalTitle = (item.originalTitle ?? '').toLowerCase();
@@ -120,12 +184,20 @@ export function computeRelevanceScore(item: SearchItem, tokens: string[]): numbe
   const meta = `${item.source} ${item.author}`.toLowerCase();
 
   let score = 0;
-  for (const token of tokens) {
-    if (title.includes(token)) score += 10;
-    if (originalTitle.includes(token)) score += 7;
-    if (tags.includes(token)) score += 6;
-    if (meta.includes(token)) score += 4;
-    if (desc.includes(token)) score += 3;
+  for (const group of groups) {
+    let bestGroupScore = 0;
+    for (let idx = 0; idx < group.length; idx += 1) {
+      const term = group[idx];
+      const weight = idx === 0 ? 1 : 0.7;
+      let termScore = 0;
+      if (title.includes(term)) termScore += 10 * weight;
+      if (originalTitle.includes(term)) termScore += 7 * weight;
+      if (tags.includes(term)) termScore += 6 * weight;
+      if (meta.includes(term)) termScore += 4 * weight;
+      if (desc.includes(term)) termScore += 3 * weight;
+      if (termScore > bestGroupScore) bestGroupScore = termScore;
+    }
+    score += bestGroupScore;
   }
   return score;
 }
@@ -140,7 +212,7 @@ export function filterAndSortSearchItems(
     favoriteIds?: Set<string>;
   }
 ): SearchItem[] {
-  const tokens = tokenizeSearchQuery(filters.q);
+  const tokenGroups = buildSearchTokenGroups(filters.q);
   const cutoffMs =
     filters.timeRange === 'all'
       ? null
@@ -174,9 +246,11 @@ export function filterAndSortSearchItems(
       return false;
     }
 
-    if (tokens.length > 0) {
+    if (tokenGroups.length > 0) {
       const haystack = `${item.title} ${item.originalTitle ?? ''} ${item.description} ${item.tags.join(' ')} ${item.source} ${item.author}`.toLowerCase();
-      const allMatched = tokens.every((token) => haystack.includes(token));
+      const allMatched = tokenGroups.every((group) =>
+        group.some((candidate) => haystack.includes(candidate))
+      );
       if (!allMatched) {
         return false;
       }
@@ -186,15 +260,11 @@ export function filterAndSortSearchItems(
   });
 
   return [...matched].sort((a, b) => {
-    if (filters.sort === 'relevance' && tokens.length > 0) {
+    if (filters.sort === 'relevance' && tokenGroups.length > 0) {
       const scoreDiff =
-        computeRelevanceScore(b, tokens) - computeRelevanceScore(a, tokens);
+        computeRelevanceScore(b, tokenGroups) -
+        computeRelevanceScore(a, tokenGroups);
       if (scoreDiff !== 0) return scoreDiff;
-    }
-
-    if (filters.sort === 'popular') {
-      const favDiff = b.favoriteCount - a.favoriteCount;
-      if (favDiff !== 0) return favDiff;
     }
 
     // 默认或并列时按最新更新时间/发布时间降序
@@ -218,7 +288,8 @@ export function splitHighlightSegments(
   text: string,
   query: string
 ): HighlightSegment[] {
-  const tokens = tokenizeSearchQuery(query);
+  const tokenGroups = buildSearchTokenGroups(query);
+  const tokens = Array.from(new Set(tokenGroups.flat()));
   if (tokens.length === 0 || !text) {
     return [{ text, matched: false }];
   }

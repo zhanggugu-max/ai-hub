@@ -28,9 +28,9 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 });
 
 const DB_SOURCE_NAME_MAP: Record<LeaderboardCategory, string> = {
-  overall: 'AI 智搜数据库 · 综合基准聚合快照',
-  open_source: 'AI 智搜数据库 · 开源模型评测快照',
-  api_value: 'AI 智搜数据库 · API 定价与吞吐快照',
+  overall: '海兰 AI 数据库 · 综合基准聚合快照',
+  open_source: '海兰 AI 数据库 · 开源模型评测快照',
+  api_value: '海兰 AI 数据库 · API 定价与吞吐快照',
 };
 
 async function seedLeaderboards() {

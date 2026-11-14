@@ -242,7 +242,7 @@ export function CompareDialog({
                 {hasPricing && (
                   <>
                     <tr>
-                      <td className="p-3 font-medium text-slate-600">API 输入单价 (/1M)</td>
+                      <td className="p-3 font-medium text-slate-600">API 输入价格（美元/百万 Token）</td>
                       {entries.map((e) => {
                         const val = e.pricing?.inputPer1MUsd;
                         const isBest =
@@ -265,7 +265,7 @@ export function CompareDialog({
                     </tr>
 
                     <tr>
-                      <td className="p-3 font-medium text-slate-600">API 输出单价 (/1M)</td>
+                      <td className="p-3 font-medium text-slate-600">API 输出价格（美元/百万 Token）</td>
                       {entries.map((e) => {
                         const val = e.pricing?.outputPer1MUsd;
                         const isBest =
@@ -288,7 +288,7 @@ export function CompareDialog({
                     </tr>
 
                     <tr>
-                      <td className="p-3 font-medium text-slate-600">1:3 加权均价 (/1M)</td>
+                      <td className="p-3 font-medium text-slate-600">1:3 加权均价（美元/百万 Token）</td>
                       {entries.map((e) => {
                         const val = apiMetricsBySlug.get(e.modelSlug)?.blendedPricePer1M ?? null;
                         const isBest =

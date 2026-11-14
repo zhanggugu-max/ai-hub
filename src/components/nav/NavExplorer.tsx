@@ -43,7 +43,7 @@ function NavToolCard({ tool }: { tool: NavTool }) {
             {tool.featured && (
               <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
                 <Sparkles className="h-3 w-3" />
-                精选推荐
+                海兰 AI 精选
               </span>
             )}
             <Badge

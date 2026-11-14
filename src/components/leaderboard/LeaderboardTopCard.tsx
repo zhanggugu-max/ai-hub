@@ -2,10 +2,12 @@ import { ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { LeaderboardEntry } from '@/data/leaderboard/mock-data';
 import {
+  extractEvalConfig,
   formatContextWindow,
   formatExactContextTokens,
   getDetailLinkLabel,
   getScoreSourceInfo,
+  getVisibleHighlights,
 } from '@/lib/leaderboard/helpers';
 import { RankDeltaBadge } from './RankDeltaBadge';
 
@@ -27,6 +29,8 @@ export function LeaderboardTopCard({ entry }: LeaderboardTopCardProps) {
     RANK_BADGE_STYLES[entry.rank] ?? 'bg-slate-100 text-slate-800 border-slate-200';
   const scoreSource = getScoreSourceInfo(entry);
   const detailLabel = getDetailLinkLabel(entry.officialUrl);
+  const evalConfig = extractEvalConfig(entry);
+  const visibleHighlights = getVisibleHighlights(entry.highlights, 2);
 
   return (
     <article className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs transition-colors hover:border-blue-300">
@@ -70,10 +74,18 @@ export function LeaderboardTopCard({ entry }: LeaderboardTopCardProps) {
           <p className="mt-0.5 text-xs text-slate-500">{entry.provider}</p>
         </div>
 
-        {/* 特性标签 */}
-        {entry.highlights.length > 0 && (
+        {/* 特性标签与测试配置 */}
+        {(evalConfig || visibleHighlights.length > 0) && (
           <div className="mt-2.5 flex flex-wrap gap-1.5">
-            {entry.highlights.slice(0, 2).map((tag) => (
+            {evalConfig && (
+              <span
+                className="rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700"
+                title="来源数据中记录的推理 / 测试配置档位"
+              >
+                测试配置：{evalConfig}
+              </span>
+            )}
+            {visibleHighlights.map((tag) => (
               <span
                 key={tag}
                 className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600"
@@ -124,11 +136,15 @@ export function LeaderboardTopCard({ entry }: LeaderboardTopCardProps) {
               {formatContextWindow(entry.contextWindowK)}
             </div>
           </div>
-          <div className="rounded-lg bg-slate-50 py-1.5">
-            <div className="text-[11px] text-slate-400">输入 $/1M</div>
+          <div
+            className="rounded-lg bg-slate-50 py-1.5"
+            title="API 输入价格单位：美元 / 百万 Token"
+          >
+            <div className="text-[11px] text-slate-400">输入价格</div>
             <div className="font-semibold tabular-nums text-slate-800">
-              {entry.pricing ? `$${entry.pricing.inputPer1MUsd.toFixed(2)}` : '-'}
+              {entry.pricing ? `$${entry.pricing.inputPer1MUsd.toFixed(2)}` : '暂无'}
             </div>
+            <div className="text-[9px] text-slate-400">美元/百万Token</div>
           </div>
         </div>
       </div>

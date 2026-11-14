@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import type { LeaderboardCategory, LeaderboardEntry } from '@/data/leaderboard/mock-data';
 import {
   computeApiValueMetrics,
+  extractEvalConfig,
   formatContextWindow,
   formatExactContextTokens,
   getDetailLinkLabel,
@@ -57,6 +58,7 @@ export function LeaderboardCardList({
         const apiMetrics = computeApiValueMetrics(entry);
         const vendorUrl = getVendorHomepageUrl(entry.provider);
         const detailLabel = getDetailLinkLabel(entry.officialUrl);
+        const evalConfig = extractEvalConfig(entry);
 
         return (
           <article
@@ -85,6 +87,11 @@ export function LeaderboardCardList({
                     >
                       {entry.licenseLabel}
                     </Badge>
+                    {evalConfig && (
+                      <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0 text-[10px] font-medium text-blue-700">
+                        配置：{evalConfig}
+                      </span>
+                    )}
                     <RankDeltaBadge delta={entry.rankDelta} />
                   </div>
                 </div>
@@ -167,9 +174,9 @@ export function LeaderboardCardList({
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
               <div className="tabular-nums">
-                输入/输出：
+                输入/输出（美元/百万 Token）：
                 {entry.pricing
-                  ? `$${entry.pricing.inputPer1MUsd.toFixed(2)} / $${entry.pricing.outputPer1MUsd.toFixed(2)} (1M)`
+                  ? `$${entry.pricing.inputPer1MUsd.toFixed(2)} / $${entry.pricing.outputPer1MUsd.toFixed(2)}`
                   : '暂无'}
               </div>
               <div className="flex items-center gap-3">

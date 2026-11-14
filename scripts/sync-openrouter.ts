@@ -329,7 +329,7 @@ async function fetchOpenRouterCatalog(): Promise<OpenRouterModelRaw[]> {
     const res = await fetch(OPENROUTER_MODELS_URL, {
       headers: {
         Accept: 'application/json',
-        'User-Agent': 'ai-hub-leaderboard-sync/2.0',
+        'User-Agent': 'hailan-ai-leaderboard-sync/2.0',
       },
       signal: AbortSignal.timeout(15000),
     });
@@ -499,9 +499,15 @@ async function fetchLiveBenchData(): Promise<{
     const licenseLabel = isOpenWeights ? '开源权重' : '闭源商用';
 
     const provider = normalizeProvider(meta.organization, modelId);
-    const displayName = meta.displayName?.replace(/\s*\(xhigh\)$/i, '').trim() || modelId;
+    const rawEffortMatch = meta.displayName?.match(/\((x?high|max|medium|low)\)\s*$/i);
+    const evalConfig = meta.effort?.trim() || rawEffortMatch?.[1]?.toLowerCase() || null;
+    const displayName =
+      meta.displayName?.replace(/\s*\((x?high|max|medium|low)\)$/i, '').trim() || modelId;
 
     const highlights: string[] = [`LB2:${overallScore.toFixed(1)}`];
+    if (evalConfig) {
+      highlights.push(`测试配置:${evalConfig}`);
+    }
     if (longAgenticRaw !== undefined) {
       highlights.push(`长程Agent:${longAgenticRaw.toFixed(1)}`);
     }

@@ -45,13 +45,20 @@ export default async function HomePage() {
 
   const hotTools = searchItems
     .filter((item) => item.type === 'tool')
-    .sort((a, b) => b.favoriteCount - a.favoriteCount)
+    .sort((a, b) => {
+      const aBoost = a.credibilityLabel === '海兰 AI 精选' ? 1 : 0;
+      const bBoost = b.credibilityLabel === '海兰 AI 精选' ? 1 : 0;
+      if (aBoost !== bBoost) return bBoost - aBoost;
+      return Date.parse(b.publishedAt) - Date.parse(a.publishedAt);
+    })
     .slice(0, 6);
   const latestResources = searchItems
     .filter((item) => item.type !== 'tool')
     .sort((a, b) => {
-      const aBoost = a.source === 'AI-Hub 精选' ? 1 : 0;
-      const bBoost = b.source === 'AI-Hub 精选' ? 1 : 0;
+      const aBoost =
+        a.source === '海兰 AI 精选' || a.credibilityLabel === '海兰 AI 精选' ? 1 : 0;
+      const bBoost =
+        b.source === '海兰 AI 精选' || b.credibilityLabel === '海兰 AI 精选' ? 1 : 0;
       if (aBoost !== bBoost) return bBoost - aBoost;
       return Date.parse(b.publishedAt) - Date.parse(a.publishedAt);
     })

@@ -24,11 +24,13 @@ import type {
 } from '@/data/leaderboard/mock-data';
 import {
   computeApiValueMetrics,
+  extractEvalConfig,
   formatContextWindow,
   formatExactContextTokens,
   getDetailLinkLabel,
   getScoreSourceInfo,
   getVendorHomepageUrl,
+  getVisibleHighlights,
 } from '@/lib/leaderboard/helpers';
 import { RankDeltaBadge } from './RankDeltaBadge';
 
@@ -138,13 +140,14 @@ export function LeaderboardTable({
                     className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-950"
                     title="1:3 加权均价 = (输入 + 3 × 输出) / 4"
                   >
-                    1:3 均价 ($/1M)
+                    1:3 加权均价
                     <SortIcon
                       columnKey="blendedPricePer1M"
                       activeKey={sortKey}
                       order={sortOrder}
                     />
                   </button>
+                  <div className="text-[10px] font-normal text-slate-400">美元/百万 Token</div>
                 </TableHead>
               </>
             ) : (
@@ -198,10 +201,12 @@ export function LeaderboardTable({
                 type="button"
                 onClick={() => onSort('inputPricePer1M')}
                 className="ml-auto inline-flex items-center gap-1 font-semibold text-slate-700 hover:text-slate-950"
+                title="API 输入 / 输出价格单位：美元 / 百万 Token"
               >
-                输入/输出 ($/1M)
+                输入 / 输出价格
                 <SortIcon columnKey="inputPricePer1M" activeKey={sortKey} order={sortOrder} />
               </button>
+              <div className="text-[10px] font-normal text-slate-400">美元/百万 Token</div>
             </TableHead>
             <TableHead className="w-[126px] text-right">详情 / 官网</TableHead>
           </TableRow>
@@ -214,6 +219,8 @@ export function LeaderboardTable({
             const apiMetrics = computeApiValueMetrics(entry);
             const vendorUrl = getVendorHomepageUrl(entry.provider);
             const detailLabel = getDetailLinkLabel(entry.officialUrl);
+            const evalConfig = extractEvalConfig(entry);
+            const visibleHighlights = getVisibleHighlights(entry.highlights, 2);
 
             return (
               <TableRow
@@ -262,7 +269,15 @@ export function LeaderboardTable({
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
                       <span>{entry.provider}</span>
-                      {entry.highlights.slice(0, 2).map((tag) => (
+                      {evalConfig && (
+                        <span
+                          className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-700"
+                          title="来源数据中记录的推理 / 测试配置档位"
+                        >
+                          测试配置：{evalConfig}
+                        </span>
+                      )}
+                      {visibleHighlights.map((tag) => (
                         <span
                           key={tag}
                           className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600"

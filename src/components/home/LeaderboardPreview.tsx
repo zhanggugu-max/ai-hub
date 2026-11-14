@@ -1,8 +1,18 @@
 import Link from 'next/link';
-import { AlertTriangle, ArrowRight, Clock, ShieldCheck, Trophy } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  Clock,
+  ExternalLink,
+  ShieldCheck,
+  Trophy,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { LeaderboardSnapshot } from '@/data/leaderboard/mock-data';
-import { formatUpdatedTime } from '@/lib/leaderboard/helpers';
+import {
+  extractSourceReleaseDate,
+  formatUpdatedTime,
+} from '@/lib/leaderboard/helpers';
 import { LeaderboardTopCard } from '@/components/leaderboard/LeaderboardTopCard';
 import { LeaderboardShareButton } from '@/components/leaderboard/LeaderboardShareButton';
 
@@ -12,6 +22,7 @@ interface LeaderboardPreviewProps {
 
 export function LeaderboardPreview({ snapshot }: LeaderboardPreviewProps) {
   const topThree = snapshot.entries.slice(0, 3);
+  const sourceReleaseDate = extractSourceReleaseDate(snapshot.sourceName);
 
   return (
     <section aria-labelledby="home-leaderboard-heading" className="space-y-4">
@@ -33,13 +44,28 @@ export function LeaderboardPreview({ snapshot }: LeaderboardPreviewProps) {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+            {sourceReleaseDate && (
+              <span className="inline-flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" />
+                来源数据：{sourceReleaseDate}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
-              最后更新：{formatUpdatedTime(snapshot.updatedAt)} (UTC+8)
+              本站最近同步：{formatUpdatedTime(snapshot.updatedAt)} (UTC+8)
             </span>
-            <span className="inline-flex items-center gap-1">
+            <span className="inline-flex flex-wrap items-center gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-              来源：{snapshot.sourceName}
+              <span>来源：</span>
+              <a
+                href={snapshot.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="inline-flex items-center gap-0.5 font-medium text-blue-600 underline-offset-4 hover:underline"
+              >
+                <span>{snapshot.sourceName}</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </span>
           </div>
         </div>
@@ -67,6 +93,10 @@ export function LeaderboardPreview({ snapshot }: LeaderboardPreviewProps) {
           <LeaderboardTopCard key={entry.id} entry={entry} />
         ))}
       </div>
+
+      <p className="text-xs leading-relaxed text-slate-500">
+        指标说明：综合能力分与代码分取自公开基准（含测试配置档位标识），价格单位均为「美元／百万 Token」，未公布维度显示为「暂无」或「—」。
+      </p>
     </section>
   );
 }

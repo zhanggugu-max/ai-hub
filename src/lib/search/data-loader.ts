@@ -39,25 +39,76 @@ const LIST_SELECT_COLUMNS =
 const DETAIL_SELECT_COLUMNS = `${LIST_SELECT_COLUMNS}, content`;
 
 function normalizeBrandText(text: string): string {
-  return text.replace(/AI\s*智搜/g, SITE_BRAND.name).replace(/AISearchHub/gi, SITE_BRAND.name);
+  return text
+    .replace(/AI\s*智搜/g, SITE_BRAND.name)
+    .replace(/AISearchHub/gi, SITE_BRAND.name)
+    .replace(/AI-Hub\s*精选/gi, `${SITE_BRAND.name} 精选`)
+    .replace(/AI-Hub/gi, SITE_BRAND.name);
+}
+
+function normalizeSource(source: string): string {
+  const cleaned = normalizeBrandText(source)
+    .replace(/Meta AI \/ LMArena 实测/g, 'Meta AI / LMArena 公开参考')
+    .replace(/LMArena & OpenRouter 实测/g, 'LMArena & OpenRouter 公开参考')
+    .replace(/^站内精选$/g, `${SITE_BRAND.name} 精选`)
+    .replace(/^站内评测对比$/g, `${SITE_BRAND.name} 对比整理`)
+    .replace(/^站内原创教程$/g, `${SITE_BRAND.name} 精选`)
+    .replace(/^站内提示词库$/g, `${SITE_BRAND.name} 精选`);
+  return cleaned;
+}
+
+function normalizeAuthor(author: string, slug: string, type: SearchItemType, title: string): string {
+  const cleaned = normalizeBrandText(author);
+  const comparisonSlugs = new Set([
+    'tool-coze-dify-bot',
+    'tool-bolt-v0-lovable',
+    'model-glm-kimi',
+    'tutorial-crewai-autogen',
+    'tutorial-ai-search-apis',
+    'model-openai-reasoning',
+    'tool-audio-voice-ai',
+  ]);
+  const isSiteTeam = /^海兰 AI\s*(评测组|编辑部|架构组|工程组|设计组|学术组|产品组|算力组|多模态组|提示词库)$/.test(
+    cleaned
+  );
+  if (!isSiteTeam) {
+    return cleaned;
+  }
+  if (comparisonSlugs.has(slug) || /\bvs\b|对比|横评/i.test(title)) {
+    return `${SITE_BRAND.name} 评测`;
+  }
+  if (type === 'model') {
+    return `${SITE_BRAND.name} 摘要`;
+  }
+  return `${SITE_BRAND.name} 整理`;
+}
+
+function normalizeCredibilityLabel(label: string): string {
+  const cleaned = normalizeBrandText(label);
+  if (cleaned === '官方一手') return '来源：官方文档';
+  if (cleaned === '站内精选' || cleaned === '实测推荐' || cleaned === '海兰 AI 精选') {
+    return `${SITE_BRAND.name} 精选`;
+  }
+  return cleaned;
 }
 
 function mapDbRowToSearchItem(row: DbResourceRow): SearchItem {
+  const title = normalizeBrandText(row.title);
   return {
     id: row.slug,
     type: row.type,
-    title: normalizeBrandText(row.title),
+    title,
     originalTitle: row.original_title ?? undefined,
     description: normalizeBrandText(row.description),
     content: row.content ? normalizeBrandText(row.content) : undefined,
     tags: Array.isArray(row.tags) ? row.tags : [],
-    source: normalizeBrandText(row.source),
-    author: normalizeBrandText(row.author),
+    source: normalizeSource(row.source),
+    author: normalizeAuthor(row.author, row.slug, row.type, title),
     publishedAt: row.published_at,
     updatedAt: row.updated_at,
     url: row.url,
     favoriteCount: row.favorite_count ?? 0,
-    credibilityLabel: row.credibility_label,
+    credibilityLabel: normalizeCredibilityLabel(row.credibility_label),
     isFavorited: false,
     isMockData: Boolean(row.is_mock_data),
   };

@@ -52,8 +52,8 @@ const SORT_OPTIONS: { value: LeaderboardSortKey; label: string }[] = [
   { value: 'codingScore', label: '代码能力分' },
   { value: 'mathScore', label: '数学推理分' },
   { value: 'contextWindow', label: '上下文长度' },
-  { value: 'inputPricePer1M', label: '输入单价 (USD/1M)' },
-  { value: 'outputPricePer1M', label: '输出单价 (USD/1M)' },
+  { value: 'inputPricePer1M', label: '输入价格 (美元/百万 Token)' },
+  { value: 'outputPricePer1M', label: '输出价格 (美元/百万 Token)' },
 ];
 
 const SORT_LABELS: Record<LeaderboardSortKey, string> = Object.fromEntries(

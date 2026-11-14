@@ -140,7 +140,7 @@ export function LeaderboardSharePoster({ posterRef, snapshot }: LeaderboardShare
                         color: '#A5F3FC',
                       }}
                     >
-                      ✦ 权威模型跑分速览
+                      ✦ 模型跑分速览
                     </span>
                     <span style={{ fontSize: 12, color: '#CBD5E1', fontWeight: 500 }}>
                       {snapshot.title}
@@ -172,7 +172,7 @@ export function LeaderboardSharePoster({ posterRef, snapshot }: LeaderboardShare
                   padding: '9px 14px',
                 }}
               >
-                <div style={{ fontSize: 10.5, color: '#94A3B8', fontWeight: 600 }}>最后更新</div>
+                <div style={{ fontSize: 10.5, color: '#94A3B8', fontWeight: 600 }}>本站最近同步</div>
                 <div
                   style={{
                     marginTop: 2,
@@ -409,7 +409,7 @@ export function LeaderboardSharePoster({ posterRef, snapshot }: LeaderboardShare
                             padding: '7px 4px',
                           }}
                         >
-                          <div style={{ fontSize: 10, color: '#94A3B8' }}>输入 $/1M</div>
+                          <div style={{ fontSize: 10, color: '#94A3B8' }}>输入 (美元/百万)</div>
                           <div
                             style={{
                               marginTop: 2,
@@ -419,7 +419,7 @@ export function LeaderboardSharePoster({ posterRef, snapshot }: LeaderboardShare
                               fontVariantNumeric: 'tabular-nums',
                             }}
                           >
-                            {entry.pricing ? `$${entry.pricing.inputPer1MUsd.toFixed(2)}` : '-'}
+                            {entry.pricing ? `$${entry.pricing.inputPer1MUsd.toFixed(2)}` : '暂无'}
                           </div>
                         </div>
                       </div>
@@ -455,7 +455,7 @@ export function LeaderboardSharePoster({ posterRef, snapshot }: LeaderboardShare
                     padding: '3px 8px',
                   }}
                 >
-                  ✓ 官方基准印章
+                  ✓ 公开基准数据来源
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#1E293B' }}>
                   LiveBench 2.0 能力基准 · OpenRouter 上下文与 API 定价
@@ -486,14 +486,14 @@ export function LeaderboardSharePoster({ posterRef, snapshot }: LeaderboardShare
                 海兰 AI ({SHARE_SITE_DOMAIN}) · 工具导航、模型榜单与实战教程
               </div>
               <div style={{ marginTop: 4, fontSize: 12, color: '#38BDF8', fontWeight: 600 }}>
-                选对 AI，用好 AI · 实时同步全球前沿大模型表现
+                选对 AI，用好 AI · 同步公开基准测试与 API 定价参考
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: '#E2E8F0' }}>
-                  🔍 扫码查看完整排行榜、获取高频 API 优惠
+                  🔍 扫码查看完整榜单与指标口径说明
                 </div>
                 <div style={{ marginTop: 2, fontSize: 11, color: '#94A3B8' }}>
                   {SHARE_SITE_DOMAIN}/leaderboard

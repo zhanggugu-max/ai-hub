@@ -17,7 +17,6 @@ interface ResourceActionsClientProps {
 
 export function ResourceActionsClient({
   resourceId,
-  initialFavoriteCount,
   defaultFavorited,
   externalUrl,
 }: ResourceActionsClientProps) {
@@ -54,10 +53,6 @@ export function ResourceActionsClient({
     }
   };
 
-  const displayFavCount =
-    initialFavoriteCount +
-    (isFavorited && !defaultFavorited ? 1 : !isFavorited && defaultFavorited ? -1 : 0);
-
   return (
     <div className="flex flex-wrap items-center gap-2.5">
       <Button
@@ -74,7 +69,6 @@ export function ResourceActionsClient({
           className={`h-4 w-4 ${isFavorited ? 'fill-amber-500 text-amber-500' : ''}`}
         />
         <span>{isFavorited ? '已收藏' : '收藏'}</span>
-        <span>({displayFavCount})</span>
       </Button>
 
       <Button

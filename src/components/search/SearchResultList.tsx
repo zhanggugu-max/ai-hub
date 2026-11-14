@@ -125,9 +125,7 @@ export function SearchResultList({
           {items.map((item) => {
             const detailHref = `/resources/${encodeURIComponent(item.id)}`;
             const isFavorited = favoriteIds.has(item.id);
-            const displayFavCount =
-              item.favoriteCount +
-              (isFavorited && !item.isFavorited ? 1 : !isFavorited && item.isFavorited ? -1 : 0);
+            const authorPrefix = item.author.startsWith('海兰 AI') ? '整理署名' : '原作者';
 
             return (
               <article
@@ -143,7 +141,7 @@ export function SearchResultList({
                       {item.credibilityLabel}
                     </span>
                     <span className="text-xs font-medium text-slate-500">
-                      来源：{item.source}
+                      原始来源：{item.source}
                     </span>
                   </div>
 
@@ -197,7 +195,7 @@ export function SearchResultList({
                     })}
                     <span className="ml-1 inline-flex items-center gap-1 text-xs text-slate-400">
                       <User className="h-3 w-3" />
-                      {item.author} · 发布 {formatSearchDate(item.publishedAt)}
+                      {authorPrefix}：{item.author} · 发布 {formatSearchDate(item.publishedAt)}
                     </span>
                   </div>
 
@@ -219,7 +217,6 @@ export function SearchResultList({
                         }`}
                       />
                       <span>{isFavorited ? '已收藏' : '收藏'}</span>
-                      <span>({displayFavCount})</span>
                     </Button>
 
                     <Link

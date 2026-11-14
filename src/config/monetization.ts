@@ -6,6 +6,14 @@ export const CONTACT_CONFIG = {
   ctaText: '复制微信号咨询',
 } as const;
 
+export const FEEDBACK_CONFIG: {
+  email: string;
+  formUrl: string;
+} = {
+  email: '',
+  formUrl: '',
+};
+
 export const AFFILIATE_CONFIG = {
   aggregatorName: 'OpenRouter / 聚合 API 平台',
   aggregatorUrl: 'https://openrouter.ai',

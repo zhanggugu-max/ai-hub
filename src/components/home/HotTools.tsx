@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Bookmark, ExternalLink, ShieldCheck, Wrench } from 'lucide-react';
+import { ArrowRight, ExternalLink, ShieldCheck, Wrench } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { SearchItem } from '@/data/search/mock-data';
 import { isRealExternalUrl } from '@/lib/search/helpers';
@@ -49,11 +49,6 @@ export function HotTools({ tools }: HotToolsProps) {
                   <ShieldCheck className="h-3 w-3 text-emerald-600" />
                   {tool.credibilityLabel}
                 </Badge>
-
-                <span className="inline-flex items-center gap-1 text-xs tabular-nums text-slate-400">
-                  <Bookmark className="h-3.5 w-3.5" />
-                  {tool.favoriteCount}
-                </span>
               </div>
 
               <h3 className="mt-3 text-base font-bold leading-snug text-slate-900">

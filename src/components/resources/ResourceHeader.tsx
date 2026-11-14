@@ -78,11 +78,13 @@ export function ResourceHeader({ item }: ResourceHeaderProps) {
       <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 sm:text-sm">
         <span className="inline-flex items-center gap-1.5">
           <Globe className="h-4 w-4 text-slate-400" />
-          <span>来源：{item.source}</span>
+          <span>原始来源：{item.source}</span>
         </span>
         <span className="inline-flex items-center gap-1.5">
           <User className="h-4 w-4 text-slate-400" />
-          <span>作者 / 整理：{item.author}</span>
+          <span>
+            {item.author.startsWith('海兰 AI') ? '整理署名' : '原作者'}：{item.author}
+          </span>
         </span>
         <span className="inline-flex items-center gap-1.5 tabular-nums">
           <Calendar className="h-4 w-4 text-slate-400" />

@@ -52,7 +52,7 @@ export function LatestResources({ items }: LatestResourcesProps) {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <ResourceTypeBadge type={item.type} />
-                    <span className="text-xs text-slate-500">{item.source}</span>
+                    <span className="text-xs text-slate-500">来源：{item.source}</span>
                   </div>
 
                   <span className="inline-flex items-center gap-1 text-xs tabular-nums text-slate-400">

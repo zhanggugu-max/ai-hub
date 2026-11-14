@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { BrandLogo } from '@/components/shared/BrandLogo';
+import { FooterInfoActions } from '@/components/shared/FooterInfoActions';
 import { SITE_BRAND } from '@/config/brand';
 
 export function SiteFooter() {
@@ -42,6 +43,7 @@ export function SiteFooter() {
           <Link href="/leaderboard" className="transition-colors hover:text-blue-600">
             能力榜单
           </Link>
+          <FooterInfoActions />
         </nav>
       </div>
     </footer>

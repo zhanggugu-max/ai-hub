@@ -12,12 +12,12 @@ export const EXTRA_CURATED_RESOURCES: CuratedResourceInput[] = [
     description:
       '可直接复制给 Claude / DeepSeek / Cursor 的 PR Review 提示词，覆盖并发竞态、权限越权、边界空值、N+1 查询与最小化重构建议。',
     tags: ['Prompt工程', '代码助手', '工程实践'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 工程组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T12:10:00+08:00',
     url: '/resources/prompt-code-review',
     favorite_count: 640,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 适用场景
 
 在提交 Pull Request 前，或接手陌生模块重构时，让模型充当严格的高级工程师执行一次性全面体检，避免只做表面语法点评。
@@ -53,12 +53,12 @@ export const EXTRA_CURATED_RESOURCES: CuratedResourceInput[] = [
     description:
       '适合快速消化 Hugging Face Daily Papers 与顶会论文，自动提炼核心痛点、方法对比、消融实验结论与可复现工程细节。',
     tags: ['Prompt工程', '论文精读', '效率工具'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 学术组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T12:12:00+08:00',
     url: '/resources/prompt-paper-reader',
     favorite_count: 590,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 适用场景
 
 把长篇英文 PDF 论文或技术报告快速转化为中文架构笔记，方便判断「值不值得精读原文」以及「能否落地到现有项目」。
@@ -91,12 +91,12 @@ export const EXTRA_CURATED_RESOURCES: CuratedResourceInput[] = [
     description:
       '把零散的一句话产品想法拆解为包含用户故事、核心流程图、数据表字段草案、异常兜底与 MVP 裁剪范围的完整文档。',
     tags: ['Prompt工程', '效率工具', '工程实践'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 产品组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T12:14:00+08:00',
     url: '/resources/prompt-prd-architect',
     favorite_count: 548,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 可直接复制的 Prompt 模板
 
 \`\`\`markdown
@@ -127,12 +127,12 @@ export const EXTRA_CURATED_RESOURCES: CuratedResourceInput[] = [
     description:
       '翻译开源 README、Release Notes 与 API 文档时保留代码块、专有名词和行内格式，彻底消除机翻腔。',
     tags: ['Prompt工程', '效率工具'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 编辑部',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T12:16:00+08:00',
     url: '/resources/prompt-tech-translator',
     favorite_count: 512,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 可直接复制的 Prompt 模板
 
 \`\`\`markdown
@@ -157,12 +157,12 @@ export const EXTRA_CURATED_RESOURCES: CuratedResourceInput[] = [
     description:
       '用于从合同、邮件、网页正文、日志中稳定抽取结构化字段，强制空值规范与防幻觉兜底，适合直接接入后端流水线。',
     tags: ['Prompt工程', '开发框架', 'RAG'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 架构组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T12:18:00+08:00',
     url: '/resources/prompt-json-extractor',
     favorite_count: 534,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 可直接复制的 Prompt 模板
 
 \`\`\`markdown
@@ -198,12 +198,12 @@ export const EXTRA_CURATED_RESOURCES: CuratedResourceInput[] = [
     description:
       '给报错日志、环境变量状态与最近变更后，强制模型先做因果假设验证再给修复命令，避免盲目试错改代码。',
     tags: ['Prompt工程', '工程实践', '代码助手'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 工程组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T12:20:00+08:00',
     url: '/resources/prompt-bug-root-cause',
     favorite_count: 562,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 可直接复制的 Prompt 模板
 
 \`\`\`markdown
@@ -227,12 +227,12 @@ export const EXTRA_CURATED_RESOURCES: CuratedResourceInput[] = [
     description:
       '拆解可直接用于客服、编程、研报助手的六段式 System Prompt 架构：身份边界、工具调用顺序、幻觉拒答与输出格式。',
     tags: ['Prompt工程', 'Agent', '开发框架'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 架构组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T12:22:00+08:00',
     url: '/resources/prompt-system-agent',
     favorite_count: 618,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 为什么生产 Agent 不能只写两句提示词
 
 在生产环境接入 Function Calling / MCP 工具后，模型最容易出现：**不查工具直接编答案**、**工具报错后死循环重试**、**越权修改用户数据**。推荐采用标准 XML 分区结构编写 System Prompt：
@@ -269,12 +269,12 @@ export const EXTRA_CURATED_RESOURCES: CuratedResourceInput[] = [
     description:
       '自动删掉“总而言之”“赋能”“划时代”等空洞套话，把草稿改写成有具体数据、有对比表格、可读性强的技术文章。',
     tags: ['Prompt工程', '效率工具'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 编辑部',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T12:24:00+08:00',
     url: '/resources/prompt-newsletter-editor',
     favorite_count: 495,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 可直接复制的 Prompt 模板
 
 \`\`\`markdown
@@ -298,12 +298,12 @@ export const EXTRA_CURATED_RESOURCES: CuratedResourceInput[] = [
     description:
       '不知道怎么写复杂 Prompt 时，用这套元提示词让模型先反向提问澄清目标，再自动生成带 Few-Shot 示例与约束条件的专业指令。',
     tags: ['Prompt工程', '效率工具'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 编辑部',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T12:26:00+08:00',
     url: '/resources/prompt-meta-optimizer',
     favorite_count: 576,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 可直接复制的 Prompt 模板
 
 \`\`\`markdown
@@ -330,12 +330,12 @@ export const EXTRA_CURATED_RESOURCES: CuratedResourceInput[] = [
     description:
       '专门防止模型只生成“永远通过的快乐路径测试”，强制覆盖并发、空值、异常抛出、Mock 隔离与回归断言。',
     tags: ['Prompt工程', '代码助手', '工程实践'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 工程组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T12:28:00+08:00',
     url: '/resources/prompt-unit-test-gen',
     favorite_count: 521,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 可直接复制的 Prompt 模板
 
 \`\`\`markdown
@@ -364,12 +364,12 @@ export const EXTRA_CURATED_RESOURCES: CuratedResourceInput[] = [
     description:
       '完整演示如何用 `@modelcontextprotocol/sdk` 在 15 分钟内写出支持 Tool 与 Resource 的本地 MCP Server，并无缝接入 Cursor、Claude Code 与 Cherry Studio。',
     tags: ['MCP', '教程', 'Agent', '代码助手'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 架构组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T13:05:00+08:00',
     url: 'https://modelcontextprotocol.io/quickstart/server',
     favorite_count: 745,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 为什么要自己写 MCP Server？
 
 Cursor、Claude Code 和 Cherry Studio 都已原生支持 **MCP (Model Context Protocol)**。当你希望 AI 直接查询公司内部数据库只读视图、读取飞书/Notion 文档、或调用定制脚本时，写一个几十行的本地 \`stdio\` MCP Server 是成本最低、复用率最高的解法。
@@ -452,12 +452,12 @@ main().catch((err) => {
     description:
       '告别“把 PDF 直接切 500 字塞进向量库”的玩具写法！系统讲解版面解析、父子块索引、BM25 关键词+向量双路召回与 BGE/Cohere Rerank 落地架构。',
     tags: ['RAG', '教程', '开发框架', '知识库'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 架构组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T13:10:00+08:00',
     url: 'https://supabase.com/docs/guides/ai/hybrid-search',
     favorite_count: 710,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 为什么基础版 RAG 在实际业务中经常“答非所问”？
 
 多数初学者按固定字符数硬切 PDF 后直接查余弦相似度，容易踩中三个典型坑：
@@ -499,12 +499,12 @@ score = (1.0 / (60 + full_text_rank)) * bm25_weight
     description:
       '算清消费级显卡（RTX 4090 / 5090 24G-32G）与 MacBook M 系列统一内存到底能稳跑多大参数模型，对比 GGUF Q4_K_M、AWQ、FP8 与上下文 KV Cache 显存占用。',
     tags: ['推理部署', '私有化部署', '开源模型', '教程'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 算力组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T13:15:00+08:00',
     url: 'https://ollama.com/library',
     favorite_count: 685,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 显存占用估算速算公式
 
 很多同学看着模型叫 \`32B\` 以为 24GB 显存能轻松塞下，结果一开长对话就 OOM。实际总显存消耗 = **模型权重 + KV Cache（随上下文长度暴涨） + 推理框架开销（约 1~2GB）**。
@@ -536,12 +536,12 @@ score = (1.0 / (60 + full_text_rank)) * bm25_weight
     description:
       '给自己的 Bot 和 Agent 接上可靠“互联网眼睛”：对比三大主流 AI 搜索与抓取 API 的返回格式、引用精度、动态 JS 页面渲染能力与免费额度。',
     tags: ['Agent', 'RAG', '教程', '效率工具'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 工程组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 评测',
     published_at: '2026-11-13T13:20:00+08:00',
     url: 'https://docs.tavily.com/',
     favorite_count: 598,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 为什么不能让 Agent 直接抓取 Google 搜索结果 HTML？
 
 传统爬虫面对反爬盾、广告导航栏和海量 HTML 标签时，直接把网页塞给 LLM 会瞬间烧光上万 Token。专门为大模型设计的 Search API 会直接返回**去噪后的干净正文、片段摘要和权威出处 URL**。
@@ -580,12 +580,12 @@ const searchRes = await fetch('https://api.tavily.com/search', {
     description:
       '系统梳理 Anthropic Claude 家族在软件工程、多步骤 Agent 工具调用与长文档分析中的分层用法，包含 Prompt Caching 与 Thinking 预算配置技巧。',
     tags: ['闭源模型', '代码助手', 'Agent', 'Prompt工程'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 评测组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 摘要',
     published_at: '2026-11-13T13:25:00+08:00',
     url: 'https://docs.anthropic.com/en/docs/about-claude/models/overview',
     favorite_count: 702,
-    credibility_label: '官方一手',
+    credibility_label: '来源：官方文档',
     content: `## Claude 各定位型号分工策略
 
 在 SWE-bench 与真实多文件代码重构场景中，Claude 系列一直凭借**极强的指令遵循度与极低的“偷懒改写”倾向**稳居一线。工程上建议按任务难度分级路由：
@@ -611,12 +611,12 @@ const searchRes = await fetch('https://api.tavily.com/search', {
     description:
       '讲透通用对话模型（GPT 系列）与强化学习推理模型（o 系列）在提示词写法、推理深度调节（reasoning_effort）与成本控制上的本质差异。',
     tags: ['闭源模型', 'Agent', 'Prompt工程', '评测基准'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 评测组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 评测',
     published_at: '2026-11-13T13:30:00+08:00',
     url: 'https://platform.openai.com/docs/guides/reasoning',
     favorite_count: 660,
-    credibility_label: '官方一手',
+    credibility_label: '来源：官方文档',
     content: `## 两类模型的本质差异
 
 | 维度 | 通用旗舰（GPT 系列） | 推理模型（o 系列 / Reasoning） |
@@ -641,12 +641,12 @@ const searchRes = await fetch('https://api.tavily.com/search', {
     description:
       '涵盖播客配音、实时语音 Agent 与会议纪要转写全链路工具选型：对比中文表现极强的 Fish Audio / SenseVoice 与海外标杆 ElevenLabs / Whisper。',
     tags: ['音频视频', '多模态', '效率工具', '开源项目'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 多模态组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 评测',
     published_at: '2026-11-13T13:35:00+08:00',
     url: 'https://fish.audio/',
     favorite_count: 528,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 一、TTS 语音合成与音色克隆怎么选？
 
 - **Fish Audio（开源生态 + 中文表现惊艳）**：支持中/英/日混合自然停顿与情绪标签，只需 10~30 秒干净干声样本即可复刻音色，既可调用官方云端 API，也能用开源权重 \`Fish Speech\` 本地部署。
@@ -671,8 +671,8 @@ const searchRes = await fetch('https://api.tavily.com/search', {
     description:
       '告别上线后“盲人摸象”：用开源的 Langfuse 为多轮 Agent、RAG 与 Prompt 迭代加上全链路 Trace、每次请求精准美元成本核算与自动化评分。',
     tags: ['Agent', '开源项目', '工程实践', '评测基准'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 架构组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T13:40:00+08:00',
     url: 'https://langfuse.com/docs',
     favorite_count: 552,

@@ -12,7 +12,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import type { LeaderboardSnapshot } from '@/data/leaderboard/mock-data';
-import { formatUpdatedTime } from '@/lib/leaderboard/helpers';
+import {
+  extractSourceReleaseDate,
+  formatUpdatedTime,
+} from '@/lib/leaderboard/helpers';
 
 interface SourceMetaBannerProps {
   snapshot: LeaderboardSnapshot;
@@ -26,8 +29,7 @@ const DATA_SOURCES = [
 
 export function SourceMetaBanner({ snapshot }: SourceMetaBannerProps) {
   const formattedTime = formatUpdatedTime(snapshot.updatedAt);
-  const arenaDateMatch = snapshot.sourceName.match(/\((\d{4}-\d{2}-\d{2})\)/);
-  const arenaSnapshotDate = arenaDateMatch?.[1];
+  const sourceReleaseDate = extractSourceReleaseDate(snapshot.sourceName);
 
   return (
     <section
@@ -43,17 +45,22 @@ export function SourceMetaBanner({ snapshot }: SourceMetaBannerProps) {
             </Badge>
           )}
 
+          {sourceReleaseDate && (
+            <div className="inline-flex items-center gap-1.5 text-slate-700">
+              <Clock className="h-4 w-4 text-slate-400" />
+              <span>来源数据版本：</span>
+              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium tabular-nums text-slate-800">
+                LiveBench {sourceReleaseDate}
+              </span>
+            </div>
+          )}
+
           <div className="inline-flex items-center gap-1.5 text-slate-700">
             <Clock className="h-4 w-4 text-slate-400" />
-            <span>最后更新：</span>
+            <span>本站最近同步：</span>
             <time dateTime={snapshot.updatedAt} className="font-medium tabular-nums text-slate-900">
               {formattedTime} (UTC+8)
             </time>
-            {arenaSnapshotDate && (
-              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
-                LiveBench {arenaSnapshotDate}
-              </span>
-            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-slate-700">
@@ -150,10 +157,16 @@ export function SourceMetaBanner({ snapshot }: SourceMetaBannerProps) {
         </div>
       </div>
 
-      <p className="mt-3 border-t border-slate-100 pt-2.5 text-xs leading-relaxed text-slate-500">
-        <span className="font-medium text-slate-700">评分口径：</span>
-        {snapshot.methodologyNote}
-      </p>
+      <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-2.5 text-xs leading-relaxed text-slate-500">
+        <p>
+          <span className="font-medium text-slate-700">评分口径：</span>
+          {snapshot.methodologyNote}
+        </p>
+        <p className="text-[11px] text-slate-500">
+          <span className="font-medium text-slate-700">指标说明：</span>
+          综合能力分（LiveBench 2.0 加权汇总）、代码分（Coding 单项得分）、上下文（OpenRouter / 官方标称最大 Token 窗口）、价格单位（美元／百万 Token，即 USD / 1M Tokens）；来源未记录的数据显示为「暂无」或「—」。
+        </p>
+      </div>
     </section>
   );
 }

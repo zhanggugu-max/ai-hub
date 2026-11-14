@@ -48,7 +48,7 @@ export function SearchHeader({
         <div className="mb-4 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              全网 AI 资料极速搜索
+              精选 AI 资料，一站检索
             </h1>
             <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-50">
               中英双语索引 · 摘要直达原文

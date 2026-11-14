@@ -44,7 +44,7 @@ const TIME_LABELS: Record<SearchTimeRange, string> = {
 const SORT_LABELS: Record<SearchSortKey, string> = {
   relevance: '综合相关度',
   latest: '最新发布时间',
-  popular: '最多站内收藏',
+  popular: '最新发布时间',
 };
 
 export function SearchFilterBar({
@@ -208,7 +208,6 @@ export function SearchFilterBar({
           <SelectContent>
             <SelectItem value="relevance">综合相关度</SelectItem>
             <SelectItem value="latest">最新发布时间</SelectItem>
-            <SelectItem value="popular">最多站内收藏</SelectItem>
           </SelectContent>
         </Select>
       </div>

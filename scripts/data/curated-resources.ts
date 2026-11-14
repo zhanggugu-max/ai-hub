@@ -28,11 +28,11 @@ export const CURATED_RESOURCES: CuratedResourceInput[] = [
       '系统拆解 Grok DeepSearch / DeeperSearch 实时信息检索技巧、Grok 4.20 / 4.7 API 参数调优与多智能体并发调用实战。',
     tags: ['效率工具', 'Agent', '评测基准'],
     source: 'xAI 官方文档整理',
-    author: 'AI 智搜编辑部',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T09:00:00+08:00',
     url: 'https://docs.x.ai',
     favorite_count: 720,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 为什么 Grok 适合实时情报与多智能体协作
 
 与其他大模型主要依赖静态检索索引不同，**Grok** 原生打通了实时社交信号与全网深度搜索（**DeepSearch / DeeperSearch**），在突发性科技事件追踪、开源项目动态核验、多角度舆情比对场景具备独特优势。
@@ -78,12 +78,12 @@ const res = await grok.chat.completions.create({
     description:
       '全面解读 LMArena 榜单前十新锐 Meta Muse Wonder、Muse Spark 1.3 与开源版 Muse Spark Open 的能力边界、代码实测与调用成本。',
     tags: ['开源模型', '评测基准', '代码助手'],
-    source: 'Meta AI / LMArena 实测',
-    author: 'AI 智搜评测组',
+    source: 'Meta AI / LMArena 公开参考',
+    author: '海兰 AI 摘要',
     published_at: '2026-11-13T08:30:00+08:00',
     url: 'https://openrouter.ai/meta',
     favorite_count: 695,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## Meta Muse 家族梯队与实测定位
 
 在 2026 下半年的 LMArena 官方盲测数据中，Meta 全新推出的 **Muse** 系列异军突起，其中 **Muse Wonder** 稳居总榜 Top 5 梯队，**Muse Spark 1.3 / 1.2 / 1.1** 与开源版 **Muse Spark Open** 同样表现抢眼。
@@ -125,12 +125,12 @@ const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     description:
       '从 Webhook 验签、3 秒超时异步回执、流式消息更新到群聊 @ 唤醒与会话记忆隔离，手把手写出稳定不超时的生产级 AI Bot。',
     tags: ['Agent', '工程实践', '自动化'],
-    source: '站内原创教程',
-    author: 'AI 智搜编辑部',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T08:00:00+08:00',
     url: '/resources/tutorial-ai-bots',
     favorite_count: 780,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 开发生产级 AI Bot 最大的 4 个坑
 
 大多数人写 Demo Bot 时直接把大模型 API 同步塞进 Webhook 请求处理器里，一上线就遇到 **平台 3 秒超时重试轰炸**、**一条问题被回复 3 遍**、**群聊上下文串线** 等故障。
@@ -191,12 +191,12 @@ export async function handleWebhook(req: Request) {
     description:
       '对比 Coze 扣子、Dify 与 n8n 在插件生态、国内 IM 发布（飞书/微信/豆包）、私有化合规与成本控制上的真实差异。',
     tags: ['Agent', '工作流', '效率工具'],
-    source: '站内评测对比',
-    author: 'AI 智搜评测组',
+    source: '海兰 AI 对比整理',
+    author: '海兰 AI 评测',
     published_at: '2026-11-12T21:00:00+08:00',
     url: 'https://www.coze.cn',
     favorite_count: 610,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 三大 Bot 编排平台怎么选？
 
 很多团队纠结用 **Coze（扣子）**、**Dify** 还是 **n8n** 来做内部效率 Bot 或对外客服机器人。三者的定位其实非常互补：
@@ -226,11 +226,11 @@ export async function handleWebhook(req: Request) {
       '深入讲解 Windsurf Cascade 上下文感知引擎、Terminal 自动修复循环、Memories 持久化规则与和 Cursor 的差异化选型。',
     tags: ['代码助手', 'Agent', '工程实践'],
     source: 'Codeium / Windsurf 官方文档',
-    author: 'AI 智搜编辑部',
+    author: '海兰 AI 整理',
     published_at: '2026-11-12T17:00:00+08:00',
     url: 'https://windsurf.com',
     favorite_count: 584,
-    credibility_label: '官方一手',
+    credibility_label: '来源：官方文档',
     content: `## Windsurf Cascade 核心工作流
 
 **Windsurf** 以 **Cascade** 引擎为核心，把代码编辑、终端命令执行、测试反馈和跨文件上下文检索打通在同一条 Flow 中，尤其擅长在开发者手动修改几行代码后自动续接后续改动。
@@ -328,12 +328,12 @@ docker run -d -p 3000:8080 \\
     description:
       '对比三大一句话生成全栈应用平台在 Next.js / Tailwind 组件美观度、Supabase 后端联调与源码导出二次开发上的真实体验。',
     tags: ['代码助手', '效率工具', '工程实践'],
-    source: '站内评测对比',
-    author: 'AI 智搜评测组',
+    source: '海兰 AI 对比整理',
+    author: '海兰 AI 评测',
     published_at: '2026-11-11T15:00:00+08:00',
     url: 'https://v0.dev',
     favorite_count: 542,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 一句话生成应用：什么时候用谁？
 
 | 工具 | 最强领域 | 后端/数据库联动 | 推荐用法 |
@@ -407,12 +407,12 @@ docker run -d -p 3000:8080 \\
     description:
       '拆解「主体锚定 + 动作指令 + 镜头语言 + 光影氛围」四段式视频提示词公式，解决人物崩坏、画面闪烁与运镜失控问题。',
     tags: ['多模态', '提示词模板', '效率工具'],
-    source: '站内原创教程',
-    author: 'AI 智搜评测组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-10T14:00:00+08:00',
     url: 'https://klingai.com',
     favorite_count: 478,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 高可控 AI 视频四段式提示词公式
 
 直接输入抽象形容词很容易导致视频模型“放飞自我”。建议固定使用：
@@ -434,12 +434,12 @@ docker run -d -p 3000:8080 \\
     description:
       '基于最新 LMArena 实测与 API 单价，对比 Z.ai GLM 5.3 系列与 Moonshot Kimi K3 系列在开源部署、长文档与代码场景的表现。',
     tags: ['开源模型', '中文优化', '评测基准'],
-    source: 'LMArena & OpenRouter 实测',
-    author: 'AI 智搜评测组',
+    source: 'LMArena & OpenRouter 公开参考',
+    author: '海兰 AI 评测',
     published_at: '2026-11-12T19:00:00+08:00',
     url: 'https://open.bigmodel.cn',
     favorite_count: 625,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## GLM 5.3 与 Kimi K3 梯队定位拆解
 
 在当前 LMArena 开源及商用榜单中，国产第一梯队在中文理解、长上下文与工具调用稳定性上表现突出：
@@ -459,11 +459,11 @@ docker run -d -p 3000:8080 \\
       '直接在终端理解整个代码仓库上下文，支持跨文件重构、测试自动修复、Git 提交与 MCP 外部工具挂载。',
     tags: ['代码助手', 'Agent', '工程实践'],
     source: 'Anthropic 官方文档',
-    author: 'AI 智搜编辑部',
+    author: '海兰 AI 整理',
     published_at: '2026-11-12T09:00:00+08:00',
     url: 'https://docs.anthropic.com/en/docs/claude-code',
     favorite_count: 682,
-    credibility_label: '官方一手',
+    credibility_label: '来源：官方文档',
     content: `## Claude Code 核心能力与工程实践
 
 **Claude Code** 运行在开发者本地终端中，直接拥有代码检索、文件读写、Shell 命令执行与测试回归闭环能力，特别适合大型仓库跨模块改造。
@@ -497,7 +497,7 @@ docker run -d -p 3000:8080 \\
       '基于有向循环图（DAG + Cycles）管理 Agent 状态机、断点持久化（Checkpointer）与人工审批中断恢复。',
     tags: ['Agent', '开源项目', '工作流'],
     source: 'LangChain 官方文档',
-    author: 'AI 智搜编辑部',
+    author: '海兰 AI 整理',
     published_at: '2026-11-11T16:00:00+08:00',
     url: 'https://langchain-ai.github.io/langgraph/',
     favorite_count: 518,
@@ -592,11 +592,11 @@ vllm serve deepseek-ai/DeepSeek-R1-Distill-Qwen-32B \\
       '标准化 AI 模型连接数据库、文件系统、GitHub 与企业内部 API 的开放协议，一次封装即可被各类客户端通用调用。',
     tags: ['Agent', '工程实践', '协议标准'],
     source: '官方文档整理',
-    author: 'AI 智搜编辑部',
+    author: '海兰 AI 整理',
     published_at: '2026-11-11T10:00:00+08:00',
     url: 'https://modelcontextprotocol.io',
     favorite_count: 645,
-    credibility_label: '官方一手',
+    credibility_label: '来源：官方文档',
     content: `## 什么是 MCP（Model Context Protocol）
 
 **MCP** 相当于 AI 应用领域的“USB-C 接口”：将工具调用（Tools）、只读上下文资源（Resources）和可复用提示模板（Prompts）解耦为标准化的 Client-Server 协议。
@@ -650,11 +650,11 @@ server.tool('search_docs', { query: z.string() }, async ({ query }) => ({
       '单个 API Key 即可调度全球 400+ 主流闭源与开源模型，自动在多家算力供应商间实现低延迟容灾路由。',
     tags: ['API网关', '效率工具', '评测基准'],
     source: '官方文档整理',
-    author: 'AI 智搜编辑部',
+    author: '海兰 AI 整理',
     published_at: '2026-11-12T11:00:00+08:00',
     url: 'https://openrouter.ai/docs',
     favorite_count: 528,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## OpenRouter 工程最佳实践
 
 1. **\`models\` 备选链路由**：在请求体传入 \`models: ["anthropic/claude-opus-4.6", "google/gemini-3.8-flash"]\`，主模型拥堵时无缝回退。
@@ -715,7 +715,7 @@ server.tool('search_docs', { query: z.string() }, async ({ query }) => ({
     published_at: '2026-11-10T10:00:00+08:00',
     url: 'https://ai-sdk.dev',
     favorite_count: 503,
-    credibility_label: '官方一手',
+    credibility_label: '来源：官方文档',
     content: `## Vercel AI SDK 核心 API 速览
 
 - **\`streamText\` + \`toUIMessageStreamResponse\`**：零样板代码完成服务端流式输出与多轮 Tool Calling 自动循环。
@@ -731,11 +731,11 @@ server.tool('search_docs', { query: z.string() }, async ({ query }) => ({
       '梳理 DeepSeek V4 Pro、V4.1 Flash 与 V3.2 在 LMArena 与代码基准中的表现定位，以及高并发生产场景的 API 路由建议。',
     tags: ['开源模型', '代码助手', '评测基准'],
     source: '官方技术文档',
-    author: 'AI 智搜评测组',
+    author: '海兰 AI 摘要',
     published_at: '2026-11-12T15:00:00+08:00',
     url: 'https://api-docs.deepseek.com',
     favorite_count: 685,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## DeepSeek V4 / V4.1 系列实测定位
 
 结合 LMArena 官方盲测数据与 OpenRouter 线上定价，DeepSeek 系列在开源模型阵营与 API 性价比维度保持强势竞争力：
@@ -757,11 +757,11 @@ server.tool('search_docs', { query: z.string() }, async ({ query }) => ({
       '全面对比 Qwen3.8 Max、Qwen3.7 Max、Qwen3.5 397B A17B 与 Qwen3.8 27B 的推理能力、中文理解与私有化显存需求。',
     tags: ['开源模型', '私有化部署', '中文优化'],
     source: 'Qwen 官方博客',
-    author: 'AI 智搜评测组',
+    author: '海兰 AI 摘要',
     published_at: '2026-11-12T12:00:00+08:00',
     url: 'https://qwenlm.github.io',
     favorite_count: 574,
-    credibility_label: '官方一手',
+    credibility_label: '来源：官方文档',
     content: `## Qwen3.x 家族分层选型建议
 
 1. **云端旗舰（Qwen3.8 Max / Qwen3.7 Max）**：在 LMArena 中文、代码与数学维度均处于第一梯队，适合复杂中文文档生成、RAG 精答与多工具编排。
@@ -777,11 +777,11 @@ server.tool('search_docs', { query: z.string() }, async ({ query }) => ({
       '对比 Gemini 4 Carbon、Argon、Hydrogen 与 Gemini 3.8 Flash 在 LMArena 综合/代码/数学的统治力表现及原生音视频理解实践。',
     tags: ['多模态', '评测基准', '长上下文'],
     source: 'Google AI 官方文档',
-    author: 'AI 智搜评测组',
+    author: '海兰 AI 摘要',
     published_at: '2026-11-12T18:00:00+08:00',
     url: 'https://ai.google.dev/gemini-api/docs',
     favorite_count: 602,
-    credibility_label: '官方一手',
+    credibility_label: '来源：官方文档',
     content: `## Gemini 4 与 Flash 系列应用分工
 
 - **Gemini 4 Carbon / Argon / Hydrogen**：LMArena 综合、代码与数学榜前排主力，适合高难度工程架构设计、跨模态长视频/PDF 深度解析与复杂推理任务。
@@ -795,12 +795,12 @@ server.tool('search_docs', { query: z.string() }, async ({ query }) => ({
     description:
       '详解系统指令、工具定义与共享知识前缀的缓存命中条件与排布顺序，大幅削减多轮对话与 Agent 重复 Token 计费。',
     tags: ['工程实践', '推理加速', '成本优化'],
-    source: '站内原创教程',
-    author: 'AI 智搜编辑部',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-11T20:00:00+08:00',
     url: '/resources/tutorial-prompt-caching',
     favorite_count: 549,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## Prompt Caching 核心原则：固定前缀放最前
 
 几乎所有主流厂商（Anthropic、OpenAI、Google、DeepSeek、OpenRouter）的缓存机制都严格依赖**完全匹配的前缀（Prefix Matching）**。哪怕前缀第 10 个字符插了一个动态时间戳，后面的数万 Token 缓存都会全部失效！
@@ -823,12 +823,12 @@ server.tool('search_docs', { query: z.string() }, async ({ query }) => ({
     description:
       '结合意图分类器与置信度分级，把简单抽取与格式转换交给 Flash 模型，仅将高复杂度推理路由给 Opus/Gemini 旗舰。',
     tags: ['工程实践', '成本优化', 'Agent'],
-    source: '站内原创教程',
-    author: 'AI 智搜编辑部',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-10T19:00:00+08:00',
     url: '/resources/tutorial-llm-router',
     favorite_count: 461,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 三层分级路由设计模板
 
 在真实线上流量中，往往 **70%–80%** 的请求（改写、摘要、分类、简单 SQL、结构化抽取）并不需要动用最昂贵的旗舰模型。
@@ -847,12 +847,12 @@ server.tool('search_docs', { query: z.string() }, async ({ query }) => ({
     description:
       '输入表结构与慢查询 SQL，自动输出复合索引建议、N+1 查询消除方案以及行级安全策略（RLS）越权漏检排查清单。',
     tags: ['提示词模板', '工程实践', '安全审计'],
-    source: '站内提示词库',
-    author: 'AI 智搜提示词库',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-09T11:00:00+08:00',
     url: '/resources/prompt-sql-optimizer',
     favorite_count: 392,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## Supabase / PostgreSQL 性能与安全审查 Prompt
 
 \`\`\`markdown
@@ -876,12 +876,12 @@ server.tool('search_docs', { query: z.string() }, async ({ query }) => ({
     description:
       '系统掌握 Suno 与 Udio 的 Meta Tags 分段控制语法（[Intro]、[Verse]、[Chorus]、[Bridge]）、乐器编排提示词、Extend 续写与 Stem 分轨导出流程。',
     tags: ['音频视频', '效率工具', '多模态', 'Prompt工程'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 编辑部',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T11:10:00+08:00',
     url: 'https://suno.com/',
     favorite_count: 472,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## Suno 与 Udio 适用场景对比
 
 | 工具 | 优势领域 | 推荐工作流 |
@@ -923,12 +923,12 @@ server.tool('search_docs', { query: z.string() }, async ({ query }) => ({
     description:
       '从状态控制粒度、角色协作模式、工具调用可观测性与生产部署成本四个维度对比主流 Multi-Agent 框架，并附可落地的代码组织建议。',
     tags: ['Agent', '教程', 'LangGraph', '开发框架'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 架构组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 评测',
     published_at: '2026-11-13T11:20:00+08:00',
     url: 'https://docs.crewai.com/',
     favorite_count: 506,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## 三大框架定位差异
 
 | 框架 | 核心抽象 | 状态持久化与中断恢复 | 典型适用场景 |
@@ -969,12 +969,12 @@ writer = Agent(
     description:
       '梳理 Midjourney `--cref` / `--sref` 一致性参数、Black Forest Labs FLUX.1/FLUX.2 提示词结构、局部重绘与电商/UI 配图落地规范。',
     tags: ['图像生成', '多模态', '效率工具', 'Prompt工程'],
-    source: 'AI-Hub 精选',
-    author: 'AI-Hub 设计组',
+    source: '海兰 AI 精选',
+    author: '海兰 AI 整理',
     published_at: '2026-11-13T11:25:00+08:00',
     url: 'https://blackforestlabs.ai/',
     favorite_count: 488,
-    credibility_label: '站内精选',
+    credibility_label: '海兰 AI 精选',
     content: `## Midjourney 与 FLUX 如何搭配使用
 
 - **Midjourney（快速探索审美与构图）**：适合概念设计、情绪板与艺术插画；利用 \`--sref <url>\` 锁定风格，\`--cref <url> --cw 80\` 保持人物面部与服装一致。

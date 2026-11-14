@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import {
   ArrowLeft,
-  Bookmark,
   ExternalLink,
   Globe,
   Info,
@@ -87,11 +86,13 @@ export function ResourceSidebar({ item }: ResourceSidebarProps) {
             <dd className="font-medium text-slate-900">{typeMeta.label}</dd>
           </div>
           <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-            <dt className="text-slate-500">收录来源</dt>
+            <dt className="text-slate-500">原始来源</dt>
             <dd className="font-medium text-slate-900">{item.source}</dd>
           </div>
           <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-            <dt className="text-slate-500">作者 / 整理者</dt>
+            <dt className="text-slate-500">
+              {item.author.startsWith('海兰 AI') ? '本站整理' : '原作者 / 机构'}
+            </dt>
             <dd className="font-medium text-slate-900">{item.author}</dd>
           </div>
           <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
@@ -100,19 +101,10 @@ export function ResourceSidebar({ item }: ResourceSidebarProps) {
               {formatSearchDate(item.publishedAt)}
             </dd>
           </div>
-          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+          <div className="flex items-center justify-between gap-2">
             <dt className="text-slate-500">最近更新</dt>
             <dd className="font-medium tabular-nums text-slate-900">
               {formatSearchDate(item.updatedAt)}
-            </dd>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <dt className="inline-flex items-center gap-1 text-slate-500">
-              <Bookmark className="h-3.5 w-3.5" />
-              <span>库内收藏热度</span>
-            </dt>
-            <dd className="font-semibold tabular-nums text-slate-900">
-              {item.favoriteCount}
             </dd>
           </div>
         </dl>

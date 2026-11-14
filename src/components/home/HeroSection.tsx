@@ -37,11 +37,29 @@ export function HeroSection() {
         </h1>
 
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-          一站找齐场景化 AI 工具导航、模型能力榜单与零基础实战教程，支持智能选型测试与全网资料极速检索。
+          一站找齐场景化 AI 工具导航、模型能力榜单与零基础实战教程；精选 AI 资料，一站检索。
         </p>
 
+        {/* 新手引导双入口 */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/matcher"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white shadow-xs transition-colors hover:bg-blue-600"
+          >
+            <Sparkles className="h-4 w-4 text-sky-300" />
+            <span>30 秒，找到适合你的 AI</span>
+          </Link>
+          <Link
+            href="/nav"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-xs transition-colors hover:border-blue-300 hover:bg-sky-50/70 hover:text-blue-700"
+          >
+            <span>按场景找工具</span>
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+
         {/* 复用全局搜索组件 */}
-        <div className="mx-auto mt-7 max-w-2xl text-left">
+        <div className="mx-auto mt-6 max-w-2xl text-left">
           <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 shadow-xs sm:p-4">
             <GlobalSearchBar size="lg" />
           </div>

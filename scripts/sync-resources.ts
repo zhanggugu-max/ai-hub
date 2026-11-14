@@ -109,7 +109,7 @@ async function fetchJsonWithTimeout<T>(url: string, headers: Record<string, stri
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'ai-hub-resource-sync/1.0',
+        'User-Agent': 'hailan-ai-resource-sync/1.0',
         Accept: 'application/json',
         ...headers,
       },
