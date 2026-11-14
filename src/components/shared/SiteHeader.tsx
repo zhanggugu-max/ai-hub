@@ -76,14 +76,9 @@ export function SiteHeader() {
           onClick={() => setMobileOpen(false)}
           className="inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap"
         >
-          <BrandLogo size={32} />
-          <span className="flex items-baseline gap-2 whitespace-nowrap">
-            <span className="text-lg font-bold tracking-tight text-slate-900">
-              {SITE_BRAND.name}
-            </span>
-            <span className="hidden text-xs font-medium whitespace-nowrap text-slate-400 xl:inline">
-              {SITE_BRAND.shortTag}
-            </span>
+          <BrandLogo priority className="h-8 w-auto sm:h-9" />
+          <span className="hidden text-xs font-medium whitespace-nowrap text-slate-400 xl:inline">
+            {SITE_BRAND.shortTag}
           </span>
         </Link>
 

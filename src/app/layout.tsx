@@ -29,6 +29,14 @@ export const metadata: Metadata = {
     siteName: SITE_BRAND.name,
     locale: "zh_CN",
     type: "website",
+    images: [
+      {
+        url: "/brand/hailan-ai-logo-v2-white.png",
+        width: 1024,
+        height: 341,
+        alt: SITE_BRAND.name,
+      },
+    ],
   },
 };
 

@@ -8,11 +8,8 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-8 text-xs leading-relaxed text-slate-500 lg:flex-row lg:items-center lg:justify-between sm:px-6 lg:px-8">
         <div className="max-w-3xl space-y-2.5">
           <div className="flex flex-wrap items-center gap-2.5">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <BrandLogo size={28} />
-              <span className="text-sm font-bold tracking-tight text-slate-900">
-                {SITE_BRAND.name}
-              </span>
+            <Link href="/" className="inline-flex shrink-0 items-center">
+              <BrandLogo className="h-7 w-auto sm:h-8" />
             </Link>
             <span className="text-slate-300">·</span>
             <span className="font-medium text-slate-700">{SITE_BRAND.positioning}</span>
