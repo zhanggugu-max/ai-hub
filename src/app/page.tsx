@@ -92,6 +92,9 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-4 font-medium text-slate-700">
+            <Link href="/guide" className="hover:text-blue-600">
+              新手教程
+            </Link>
             <Link href="/search" className="hover:text-blue-600">
               资料搜索
             </Link>

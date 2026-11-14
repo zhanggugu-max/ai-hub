@@ -3,7 +3,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Compass, Layers, Menu, Search, Trophy, X, type LucideIcon } from 'lucide-react';
+import {
+  Compass,
+  GraduationCap,
+  Layers,
+  Menu,
+  Search,
+  Trophy,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavLinkItem {
@@ -16,6 +25,13 @@ interface NavLinkItem {
 
 const NAV_LINKS: NavLinkItem[] = [
   { href: '/', label: '首页', match: (p: string) => p === '/' },
+  {
+    href: '/guide',
+    label: '新手教程',
+    icon: GraduationCap,
+    iconClass: 'text-emerald-600',
+    match: (p: string) => p.startsWith('/guide'),
+  },
   {
     href: '/search',
     label: '资料搜索',
@@ -114,6 +130,7 @@ export function SiteHeader() {
                   onClick={() => setMobileOpen(false)}
                   className={cn(
                     'inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm transition-colors',
+                    item.href === '/' && 'col-span-2',
                     active
                       ? 'bg-slate-100 font-semibold text-slate-900'
                       : 'font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900'
