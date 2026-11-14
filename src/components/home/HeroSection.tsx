@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { GlobalSearchBar } from '@/components/shared/GlobalSearchBar';
+import { SITE_BRAND } from '@/config/brand';
 
 const QUICK_CATEGORY_LINKS = [
   { label: 'AI 工具', href: '/search?type=tool', icon: Wrench },
@@ -26,17 +27,17 @@ export function HeroSection() {
       <div className="mx-auto max-w-4xl px-4 pt-10 pb-12 text-center sm:px-6 sm:pt-14 sm:pb-14 lg:px-8">
         <Badge
           variant="secondary"
-          className="mb-4 border border-blue-100 bg-blue-50/80 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50"
+          className="mb-4 border border-sky-200/80 bg-sky-50/80 px-3.5 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-50"
         >
-          中文优先 · 仅索引元数据与自编摘要 · 榜单定时更新
+          {SITE_BRAND.name} · {SITE_BRAND.positioning}
         </Badge>
 
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-          一站找齐 AI 资料、能力榜单与实战工具
+          {SITE_BRAND.slogan}
         </h1>
 
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-          面向开发者、产品经理与 AI 学习者，快速检索工具指南、开源模型、前沿论文与提示词模板，横向对比主流模型能力与 API 性价比。
+          一站找齐场景化 AI 工具导航、模型能力榜单与零基础实战教程，支持智能选型测试与全网资料极速检索。
         </p>
 
         {/* 复用全局搜索组件 */}

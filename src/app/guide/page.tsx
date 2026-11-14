@@ -9,24 +9,25 @@ import {
   GUIDE_STEPS,
   PROMPT_TEMPLATES,
 } from '@/data/beginner-guides';
+import { SITE_BRAND } from '@/config/brand';
 import { getSiteUrl } from '@/lib/site-url';
 
 const baseUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: 'AI 零基础实战入门指南：选型、提问模板与 API Key 教程 | AI 智搜',
+  title: 'AI 零基础实战入门指南：选型、提问模板与 API Key 教程',
   description:
     '不讲晦涩算法原理，用大白话带零基础用户 4 步搞定 AI 工具选型、2026 最新提问公式、API Key 配置与桌面智能体入门，附可复制万能提示词模板与 AI 术语人话词典。',
   alternates: {
     canonical: '/guide',
   },
   openGraph: {
-    title: 'AI 零基础实战入门指南 | AI 智搜',
+    title: 'AI 零基础实战入门指南｜海兰 AI',
     description:
       '4 步零基础通关指南 + 6 个万能提示词模板 + 8 个 AI 黑话人话词典，5 分钟跑通你的第一个 API 与桌面智能体。',
     url: `${baseUrl}/guide`,
-    siteName: 'AI 智搜',
+    siteName: SITE_BRAND.name,
     locale: 'zh_CN',
     type: 'website',
   },

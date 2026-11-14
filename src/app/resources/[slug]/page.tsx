@@ -41,14 +41,14 @@ export async function generateMetadata({
 
   if (!item) {
     return {
-      title: '未找到该资料 | AI 智搜',
+      title: '未找到该资料',
       description: '请求的 AI 资料条目不存在或尚未发布。',
     };
   }
 
   return {
     metadataBase: new URL(baseUrl),
-    title: `${item.title} | AI 智搜`,
+    title: item.title,
     description: item.description,
     keywords: item.tags,
     alternates: {
@@ -104,7 +104,7 @@ async function ResourceDetailContent({
     },
     publisher: {
       '@type': 'Organization',
-      name: 'AI 智搜 (AISearchHub)',
+      name: '海兰 AI',
     },
     datePublished: item.publishedAt,
     dateModified: item.updatedAt,

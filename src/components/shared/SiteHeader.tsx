@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Compass,
   GraduationCap,
   Layers,
   Menu,
@@ -14,6 +13,8 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
+import { BrandLogo } from '@/components/shared/BrandLogo';
+import { SITE_BRAND } from '@/config/brand';
 import { cn } from '@/lib/utils';
 
 interface NavLinkItem {
@@ -69,25 +70,28 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-xs">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
         <Link
           href="/"
           onClick={() => setMobileOpen(false)}
-          className="inline-flex items-center gap-2.5"
+          className="inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap"
         >
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white shadow-xs">
-            <Compass className="h-5 w-5" />
-          </span>
-          <span className="flex items-baseline gap-2">
-            <span className="text-lg font-bold tracking-tight text-slate-900">AI 智搜</span>
-            <span className="hidden text-xs font-medium text-slate-400 sm:inline">
-              AISearchHub
+          <BrandLogo size={32} />
+          <span className="flex items-baseline gap-2 whitespace-nowrap">
+            <span className="text-lg font-bold tracking-tight text-slate-900">
+              {SITE_BRAND.name}
+            </span>
+            <span className="hidden text-xs font-medium whitespace-nowrap text-slate-400 xl:inline">
+              {SITE_BRAND.shortTag}
             </span>
           </span>
         </Link>
 
         {/* 桌面端导航 */}
-        <nav aria-label="主导航" className="hidden items-center gap-1.5 sm:flex">
+        <nav
+          aria-label="主导航"
+          className="hidden shrink-0 items-center md:flex md:gap-1 lg:gap-1.5"
+        >
           {NAV_LINKS.map((item) => {
             const active = item.match(pathname);
             const Icon = 'icon' in item ? item.icon : null;
@@ -96,13 +100,13 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors',
+                  'inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs whitespace-nowrap transition-colors lg:px-3 lg:text-sm',
                   active
                     ? 'bg-slate-100 font-semibold text-slate-900'
                     : 'font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 )}
               >
-                {Icon && <Icon className={cn('h-3.5 w-3.5', item.iconClass)} />}
+                {Icon && <Icon className={cn('h-3.5 w-3.5 shrink-0', item.iconClass)} />}
                 <span>{item.label}</span>
               </Link>
             );
@@ -113,7 +117,7 @@ export function SiteHeader() {
         <button
           type="button"
           onClick={() => setMobileOpen((prev) => !prev)}
-          className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-700 hover:bg-slate-50 sm:hidden"
+          className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-700 hover:bg-slate-50 md:hidden"
           aria-expanded={mobileOpen}
           aria-label={mobileOpen ? '收起导航菜单' : '展开导航菜单'}
         >
@@ -125,7 +129,7 @@ export function SiteHeader() {
       {mobileOpen && (
         <nav
           aria-label="移动端主导航"
-          className="border-t border-slate-200/80 bg-white px-4 py-2.5 sm:hidden"
+          className="border-t border-slate-200/80 bg-white px-4 py-2.5 md:hidden"
         >
           <div className="grid grid-cols-2 gap-1.5">
             {NAV_LINKS.map((item) => {

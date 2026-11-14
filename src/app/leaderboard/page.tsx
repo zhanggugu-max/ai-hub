@@ -13,7 +13,7 @@ const baseUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: 'AI 大模型能力排行榜与 API 性价比对比 | AI 智搜',
+  title: 'AI 大模型能力排行榜与 API 性价比对比',
   description:
     '聚合 AI 模型综合能力榜、开源权重模型榜与 API 价格/吞吐对比，支持多维度筛选、更新时间溯源与最多 4 个模型横向对比。',
   alternates: {

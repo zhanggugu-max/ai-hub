@@ -5,24 +5,25 @@ import { Badge } from '@/components/ui/badge';
 import { NAV_CATEGORIES, NAV_TOOLS } from '@/data/nav-tools';
 import { NavExplorer } from '@/components/nav/NavExplorer';
 import { ServiceSupportCard } from '@/components/monetization/ServiceSupportCard';
+import { SITE_BRAND } from '@/config/brand';
 import { getSiteUrl } from '@/lib/site-url';
 
 const baseUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: '场景化 AI 工具导航：桌面智能体、编程、建站与多模态选型指南 | AI 智搜',
+  title: '场景化 AI 工具导航：桌面智能体、编程、建站与多模态选型指南',
   description:
     `拒绝网址堆砌，按真实开发、科研与创作工作流精选 ${NAV_TOOLS.length} 款高口碑桌面自主智能体、AI 编程 Agent、工作流编排、AI 建站原型、图像视频与音频效率工具，附大白话选型建议与实战教程直达。`,
   alternates: {
     canonical: '/nav',
   },
   openGraph: {
-    title: '场景化 AI 工具导航 | AI 智搜',
+    title: '场景化 AI 工具导航｜海兰 AI',
     description:
       `${NAV_CATEGORIES.length} 大场景精选 ${NAV_TOOLS.length} 款高口碑 AI 工具与大白话选型建议，直达站内深度教程与官方入口。`,
     url: `${baseUrl}/nav`,
-    siteName: 'AI 智搜',
+    siteName: SITE_BRAND.name,
     locale: 'zh_CN',
     type: 'website',
   },

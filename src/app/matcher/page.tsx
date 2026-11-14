@@ -4,24 +4,25 @@ import { ChevronRight, Home, Wand2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ToolMatcherClient } from '@/components/matcher/ToolMatcherClient';
 import { NAV_TOOLS } from '@/data/nav-tools';
+import { SITE_BRAND } from '@/config/brand';
 import { getSiteUrl } from '@/lib/site-url';
 
 const baseUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: 'AI 工具智能选型匹配器：30 秒测出最适合你的工具组合 | AI 智搜',
+  title: 'AI 工具智能选型匹配器：30 秒测出最适合你的工具组合',
   description:
     `不知道 ${NAV_TOOLS.length} 款 AI 工具选哪个？通过 5 道通俗场景、预算、网络与实操偏好问答，智能推荐最顺手的 Top 3 工具与一站式教程直达。`,
   alternates: {
     canonical: '/matcher',
   },
   openGraph: {
-    title: 'AI 工具智能选型匹配器 | AI 智搜',
+    title: 'AI 工具智能选型匹配器｜海兰 AI',
     description:
       `5 道场景小测试，从 ${NAV_TOOLS.length} 款主流 AI 工具中为你匹配 Top 1 首选与备选平替方案。`,
     url: `${baseUrl}/matcher`,
-    siteName: 'AI 智搜',
+    siteName: SITE_BRAND.name,
     locale: 'zh_CN',
     type: 'website',
   },
