@@ -1,6 +1,7 @@
 'use client';
 
-import { ExternalLink, Info, Mail, MessageSquareWarning } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Check, Copy, ExternalLink, Info, Mail, MessageSquareWarning } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,12 +11,39 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { SITE_BRAND } from '@/config/brand';
-import { FEEDBACK_CONFIG } from '@/config/monetization';
+import { FEEDBACK_CONFIG, PUBLIC_CONTACT_EMAIL } from '@/config/monetization';
 
 export function FooterInfoActions() {
-  const realEmail = FEEDBACK_CONFIG.email.trim();
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const realEmail = (FEEDBACK_CONFIG.email || PUBLIC_CONTACT_EMAIL).trim();
   const realFormUrl = FEEDBACK_CONFIG.formUrl.trim();
   const hasAnyChannel = Boolean(realEmail || realFormUrl);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleCopyEmail = async () => {
+    if (!realEmail) return;
+    try {
+      await navigator.clipboard.writeText(realEmail);
+      setCopiedEmail(true);
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current);
+      }
+      copyTimerRef.current = setTimeout(() => {
+        setCopiedEmail(false);
+      }, 2500);
+    } catch {
+      setCopiedEmail(false);
+    }
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -48,7 +76,14 @@ export function FooterInfoActions() {
             <div className="rounded-lg border border-slate-200 bg-white p-3.5 text-slate-600">
               <div className="mb-1 font-semibold text-slate-900">3. 版权与独立性声明</div>
               <p>
-                本站仅展示条目元数据、自编中文摘要及原链接，不镜像或抓取第三方全文内容；部分平台链接可能附带站长邀请福利并明确标注，不影响工具推荐排序与测评打分。
+                本站仅展示条目元数据、自编中文摘要及原链接，不镜像或抓取第三方全文内容；部分平台链接可能附带站长邀请福利并明确标注，不影响工具推荐排序与测评打分。如需纠错或商务联系，可发邮件至{' '}
+                <a
+                  href={`mailto:${realEmail}`}
+                  className="font-medium text-blue-600 underline-offset-2 hover:underline"
+                >
+                  {realEmail}
+                </a>
+                。
               </p>
             </div>
           </div>
@@ -63,9 +98,9 @@ export function FooterInfoActions() {
         </DialogTrigger>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>反馈与内容纠错</DialogTitle>
+            <DialogTitle>反馈与商务联系</DialogTitle>
             <DialogDescription>
-              发现链接失效、价格变动、测试口径描述不准确或希望补充新工具，欢迎核对相关信息。
+              发现链接失效、价格变动、测试口径描述不准确，或希望沟通工具收录与商务合作，欢迎来信联系。
             </DialogDescription>
           </DialogHeader>
 
@@ -74,14 +109,55 @@ export function FooterInfoActions() {
               <div className="mb-1.5 font-semibold text-slate-900">建议核对维度</div>
               <ul className="list-disc space-y-1 pl-4 text-xs text-slate-600">
                 <li>对应页面路径或模型 / 工具名称（如榜单页或匹配器条目）</li>
-                <li>问题类型（链接失效 / 定价调整 / 署名与来源标注说明）</li>
+                <li>问题类型（链接失效 / 定价调整 / 署名与来源标注说明 / 商务合作）</li>
                 <li>可核验的官方定价或文档参考链接</li>
               </ul>
             </div>
 
             {hasAnyChannel ? (
               <div className="space-y-2.5 rounded-lg border border-slate-200 bg-white p-3.5">
-                <div className="font-semibold text-slate-900">当前可用反馈通道</div>
+                <div className="font-semibold text-slate-900">官方反馈与商务联系邮箱</div>
+                {realEmail && (
+                  <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50/80 p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="inline-flex min-w-0 items-center gap-2 text-xs font-semibold text-slate-800 sm:text-sm">
+                      <Mail className="h-4 w-4 shrink-0 text-blue-600" />
+                      <span className="truncate select-all">{realEmail}</span>
+                    </div>
+
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCopyEmail}
+                        className={
+                          copiedEmail
+                            ? 'inline-flex cursor-pointer items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition-colors'
+                            : 'inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-600'
+                        }
+                      >
+                        {copiedEmail ? (
+                          <>
+                            <Check className="h-3.5 w-3.5" />
+                            <span>已复制 ✓</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>一键复制邮箱</span>
+                          </>
+                        )}
+                      </button>
+
+                      <a
+                        href={`mailto:${realEmail}`}
+                        className="inline-flex items-center gap-1 rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-600"
+                      >
+                        <span>发送邮件</span>
+                        <ExternalLink className="h-3 w-3 opacity-85" />
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 {realFormUrl && (
                   <a
                     href={realFormUrl}
@@ -93,24 +169,12 @@ export function FooterInfoActions() {
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 )}
-                {realEmail && (
-                  <a
-                    href={`mailto:${realEmail}`}
-                    className="inline-flex w-full items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
-                  >
-                    <span className="inline-flex items-center gap-1.5">
-                      <Mail className="h-3.5 w-3.5 text-slate-500" />
-                      <span>纠错邮箱：{realEmail}</span>
-                    </span>
-                    <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
-                  </a>
-                )}
               </div>
             ) : (
               <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3.5 text-xs text-slate-600">
                 <div className="font-semibold text-slate-900">站内说明</div>
                 <p className="mt-1 leading-relaxed">
-                  {SITE_BRAND.name}当前以公开工具导航、能力榜单与规则选型文档为主，暂未开放公开邮箱或人工咨询入口；所有工具条目的来源出处与核实日期均已在对应页面直接标注。
+                  {SITE_BRAND.name}当前以公开工具导航、能力榜单与规则选型文档为主，暂未开放公开人工咨询通道。
                 </p>
               </div>
             )}

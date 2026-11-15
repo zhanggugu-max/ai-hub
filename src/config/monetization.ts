@@ -48,11 +48,13 @@ export function getToolReferral(toolId: string): ToolReferralConfig | undefined 
   return TOOL_REFERRALS[toolId];
 }
 
+export const PUBLIC_CONTACT_EMAIL = 'hailanai@yeah.net';
+
 export const FEEDBACK_CONFIG: {
   email: string;
   formUrl: string;
 } = {
-  email: '',
+  email: PUBLIC_CONTACT_EMAIL,
   formUrl: '',
 };
 
