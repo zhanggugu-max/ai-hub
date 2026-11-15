@@ -38,7 +38,7 @@ export const BATCH4_VISUAL_AUDIO_PROFILES: ToolCapabilityProfile[] = [
     networkAvailability: 'domestic_direct',
     difficulty: 1,
     advantages: [
-      '国内免代理直连使用，人物动作连贯性、物理运动与多镜头音画同步表现稳居前列',
+      '支持国内网络直接访问，人物动作连贯性、物理运动与多镜头音画同步表现稳居前列',
       '网页端内置文生视频、图生视频、对口型与图像编辑全套创作流程',
     ],
     limitations: [
@@ -444,7 +444,7 @@ export const BATCH4_VISUAL_AUDIO_PROFILES: ToolCapabilityProfile[] = [
       '界面极简轻量，专为高频开会的产研与管理者设计',
     ],
     limitations: [
-      '对英文及海外主流线上会议适配度最佳；国内使用需海外网络且免费版历史仅保留 30 天',
+      '对英文及海外主流线上会议适配度较高；国内使用需自行具备合规海外网络环境且免费版历史仅保留 30 天',
       '核心转录与纪要归纳依赖云端模型处理，非完全断网离线方案',
     ],
     officialUrl: 'https://www.granola.ai',

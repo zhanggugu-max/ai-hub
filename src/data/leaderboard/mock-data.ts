@@ -247,7 +247,7 @@ export const MOCK_LEADERBOARDS: Record<LeaderboardCategory, LeaderboardSnapshot>
         contextWindowK: 128,
         pricing: { inputPer1MUsd: 0.45, outputPer1MUsd: 1.5 },
         speedTokensPerSec: 108,
-        highlights: ['MIT 协议', '代码第一梯队'],
+        highlights: ['MIT 协议', '代码表现前列'],
         officialUrl: 'https://example.com/models/open-coder-r2',
       },
       {

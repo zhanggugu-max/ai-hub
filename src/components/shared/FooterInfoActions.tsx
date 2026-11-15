@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Check, Copy, ExternalLink, Info, Mail, MessageSquareWarning } from 'lucide-react';
+import { Check, Copy, ExternalLink, Info, Mail, MessageSquareWarning, ShieldCheck } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -84,6 +84,55 @@ export function FooterInfoActions() {
                   {realEmail}
                 </a>
                 。
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 免责声明 */}
+      <Dialog>
+        <DialogTrigger className="inline-flex cursor-pointer items-center gap-1 transition-colors hover:text-blue-600">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          <span>免责声明</span>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>免责与合规声明</DialogTitle>
+            <DialogDescription>
+              使用 {SITE_BRAND.name} 导航、能力参考榜、规则选型及资料索引服务前，请阅读以下声明。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-xs leading-relaxed text-slate-600 sm:text-sm">
+            <div className="rounded-lg bg-slate-50 p-3.5">
+              <div className="mb-1 font-semibold text-slate-900">1. 中立导航与知识产权</div>
+              <p>
+                本站仅提供工具导航索引、公开技术元数据与自编中文使用摘要。所收录 AI 产品、模型及项目的商标、名称与官网内容版权均归原权利人所有；如发现署名、来源标注或权利异议，请邮件联系{' '}
+                <a
+                  href={`mailto:${realEmail}`}
+                  className="font-medium text-blue-600 underline-offset-2 hover:underline"
+                >
+                  {realEmail}
+                </a>{' '}
+                核实处理。
+              </p>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-3.5">
+              <div className="mb-1 font-semibold text-slate-900">2. 合法合规使用提示</div>
+              <p>
+                本站不提供任何网络代理服务或软件破解、盗版镜像、共享账号等违规资源，所有外链均指向官方正版渠道或合规开源仓库。用户访问与使用相关海外或国内 AI 服务时，须自行遵守所在地法律法规及目标平台用户协议。
+              </p>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-3.5">
+              <div className="mb-1 font-semibold text-slate-900">3. 信息时效性</div>
+              <p>
+                大模型能力评测、平台免费体验额度、接口定价及网络访问策略可能随厂商政策动态调整，本站展示字段与推荐结果仅供选型参考，请以对应官方页面最新实时公告为准。
+              </p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-3.5">
+              <div className="mb-1 font-semibold text-slate-900">4. 推广与邀请披露</div>
+              <p>
+                部分云平台或工具外链可能包含站长邀请福利或合作推广标识，且均在页面明确提示；推广与邀请关系不会改变匹配算法权重、榜单得分或推荐排序。
               </p>
             </div>
           </div>

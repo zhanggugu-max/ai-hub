@@ -126,7 +126,7 @@ export const BATCH2_WORKFLOW_API_PROFILES: ToolCapabilityProfile[] = [
     networkAvailability: 'domestic_direct',
     difficulty: 1,
     advantages: [
-      '国内免代理直连、零代码拖拽编排 Bot 与工作流，上手门槛极低',
+      '支持国内网络直接访问，可零代码拖拽编排 Bot 与工作流，上手门槛低',
       '官方插件生态丰富，可一键发布至飞书、微信客服等国内常用渠道',
     ],
     limitations: [
@@ -301,7 +301,7 @@ export const BATCH2_WORKFLOW_API_PROFILES: ToolCapabilityProfile[] = [
     ],
     limitations: [
       '模型权重体积极大，实际推理速度受限于本机显存/内存性能',
-      '本身非开源仓库（免费闭源软件），且初次下载大型 Hugging Face 权重国内常需镜像加速',
+      '本身非开源仓库（免费闭源软件），且初次下载大型 Hugging Face 权重时国内网络拉取常较慢',
     ],
     officialUrl: 'https://lmstudio.ai',
     sourceUrl: 'https://lmstudio.ai',

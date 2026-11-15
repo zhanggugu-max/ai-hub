@@ -83,7 +83,7 @@ export const BATCH3_RESEARCH_BUILDER_PROFILES: ToolCapabilityProfile[] = [
     networkAvailability: 'domestic_direct',
     difficulty: 1,
     advantages: [
-      '国内免代理直连开箱即用，超长 PDF 论文/财报与中文长文理解表现稳健',
+      '支持国内网络直接访问、开箱即用，超长 PDF 论文/财报与中文长文理解表现稳健',
       '多步深度检索（Deep Research）可自动拆解检索步骤并汇总结构化综述报告',
     ],
     limitations: [
@@ -170,7 +170,7 @@ export const BATCH3_RESEARCH_BUILDER_PROFILES: ToolCapabilityProfile[] = [
     ],
     limitations: [
       '聚焦最新 AI 预印本追踪，不适合交叉学科深度问答或上传自定义私有文件分析',
-      '上游指向 huggingface.co/papers / arxiv.org 原站，国内直连经常受阻或依赖镜像（不能算稳定开箱直连）',
+      '上游指向 huggingface.co/papers / arxiv.org 原站，国内直连经常受阻或加载缓慢（需自行具备合规海外网络环境，不能算稳定开箱直连）',
     ],
     officialUrl: 'https://huggingface.co/papers',
     sourceUrl: 'https://huggingface.co/papers',
@@ -378,7 +378,7 @@ export const BATCH3_RESEARCH_BUILDER_PROFILES: ToolCapabilityProfile[] = [
       '模型卡信息透明，含许可证、量化格式与评测基准链接',
     ],
     limitations: [
-      '官方域名 huggingface.co 在国内直连常受阻或限速，通常需国际网络或自行配置第三方镜像',
+      '官方域名 huggingface.co 在国内直连常受阻或限速，通常需自行具备合规海外网络环境以保障访问稳定',
       '本质是开源模型仓库与 AI 每日热榜社区，并非跨学科系统文献检索或深度研读工具（其 API 用于模型推理而非学术检索）',
     ],
     officialUrl: 'https://huggingface.co/papers',

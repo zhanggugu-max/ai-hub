@@ -904,7 +904,7 @@ export const BATCH1_DESKTOP_CODING_PROFILES: ToolCapabilityProfile[] = [
     networkAvailability: 'domestic_direct',
     difficulty: 1,
     advantages: [
-      '国内免代理直连网页工作台，无需安装即可一站式生成文档、幻灯片与研究报告',
+      '支持国内网络直接访问的网页工作台，无需安装即可一站式生成文档、幻灯片与研究报告',
       '多智能体协同拆解长任务，对中文语境与演示排版较友好',
     ],
     limitations: [
@@ -994,7 +994,7 @@ export const BATCH1_DESKTOP_CODING_PROFILES: ToolCapabilityProfile[] = [
     networkAvailability: 'international_required',
     difficulty: 4,
     advantages: [
-      '终端原生大型代码库跨文件重构、测试排错与 Git 提交能力处于第一梯队',
+      '终端原生大型代码库跨文件重构、测试排错与 Git 提交能力处于主流前列',
       '不绑定单一编辑器，直接融入本地 Shell 与 CI 工作流',
     ],
     limitations: [

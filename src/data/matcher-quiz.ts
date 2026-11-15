@@ -169,7 +169,7 @@ export const SCENE_TASK_OPTIONS: Record<SceneKey, TaskQuizOption[]> = {
     {
       value: 'deep_research',
       label: TASK_META.deep_research.label,
-      description: '自动开展多轮全网检索与交叉核验，产出结构化研究报告',
+      description: '自动开展多轮公开网络检索与交叉核验，产出结构化研究报告',
     },
   ],
   workflow_automation: [
@@ -241,7 +241,7 @@ export const BUDGET_OPTIONS: DimensionQuizOption<BudgetPreference>[] = [
   {
     value: 'free_or_low_cost',
     label: '免费额度够用 / 低成本试错',
-    description: '希望先零门槛或低花费试用，免费体验档能满足轻中度使用',
+    description: '希望低门槛或低花费试用，免费体验档能满足轻中度使用',
   },
   {
     value: 'completely_free',
@@ -275,7 +275,7 @@ export const NETWORK_OPTIONS: DimensionQuizOption<NetworkPreference>[] = [
   {
     value: 'domestic_direct',
     label: '必须或优先国内网络直连',
-    description: '国内网络打开即用，不折腾跨境代理与海外支付账号',
+    description: '支持国内网络直接访问，无需复杂网络配置与海外支付账号',
   },
   {
     value: 'international_ok',
@@ -342,7 +342,7 @@ export const HARD_CONSTRAINT_OPTIONS: Record<
     key: 'mustDomesticDirect',
     label: '硬性筛选：必须开箱国内网络直连可用',
     description:
-      '严格排除需国际网络、状态未核实，以及仅客户端免费但需自备国内 API/镜像的产品；满足后才进入主力推荐',
+      '严格排除需国际网络、状态未核实，以及仅客户端免费但需自备兼容 API 接口的产品；满足后才进入主力推荐',
   },
   workMode: {
     key: 'mustLocalRun',

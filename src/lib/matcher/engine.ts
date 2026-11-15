@@ -531,7 +531,7 @@ function scoreBudgetDimension(
       } else if (sw === 'free' && api === 'byok_payg') {
         rawScore = 2.0;
         note = '客户端/工具本体免费，但模型算力需自备付费 API Key 或本地部署';
-        unmetPreferences.push('软件免费但模型需自带 API Key（非零成本开箱白嫖）');
+        unmetPreferences.push('软件免费但模型需自带 API Key（非完全零成本开箱使用）');
       } else if (sw === 'freemium' && api === 'byok_payg') {
         rawScore = 1.5;
         note = '部分功能受限免费且模型算力仍需自带 API Key';
@@ -676,7 +676,7 @@ function scoreNetworkDimension(
     case 'domestic_direct': {
       if (tool.networkAvailability === 'domestic_direct') {
         rawScore = 5;
-        note = '国内网络可稳定直连访问，无需复杂代理';
+        note = '支持国内网络直接稳定访问，无需复杂网络配置';
       } else if (tool.networkAvailability === 'partial_or_byok') {
         rawScore = 3.2;
         note = '软件本身可国内使用，但直连体验取决于所接入模型服务（如搭配 DeepSeek/硅基流动或本地模型可直连）';
@@ -710,7 +710,7 @@ function scoreNetworkDimension(
         note = '可灵活通过自定义 API 地址、兼容接口或本地运行适配网络环境';
       } else {
         rawScore = 4.0;
-        note = '需具备国际网络或合规代理条件即可启用';
+        note = '需自行具备合规海外网络环境即可启用';
       }
       break;
     }
@@ -755,7 +755,7 @@ function scoreDifficultyDimension(
     rawScore: clampScore(rawScore),
     weightedContribution: 0,
     isUnknownField: false,
-    note: `上手难度 ${diff}/5（1 为零门槛，5 为硬核工程部署）`,
+    note: `上手难度 ${diff}/5（1 为极低门槛，5 为硬核工程部署）`,
   };
 }
 
@@ -797,7 +797,7 @@ function checkHardConstraints(
       unverifiedReasons.push('未核实国内网络直连可用性');
     } else if (tool.networkAvailability === 'partial_or_byok') {
       failedReasons.push(
-        '需用户自行配置国内大模型 API、本地 Ollama 或镜像站才可稳定直连，不属于开箱完全国内直连产品',
+        '需用户自行配置国内大模型 API 或本地 Ollama 才可稳定直连，不属于开箱完全国内直连产品',
       );
     } else if (tool.networkAvailability === 'international_required') {
       failedReasons.push('官方服务依赖国际网络环境，不满足“必须国内网络直连”硬性要求');
@@ -1216,7 +1216,7 @@ export function detectPreferenceConflicts(answers: MatcherAnswersV2): Preference
       severity: 'narrowing',
       title: '网络条件偏好与“必须国内直连”叠加收窄',
       description:
-        '你选择了“已有稳定国际网络条件”，但又勾选了“必须国内网络直连”。系统会优先执行硬性直连过滤，所有依赖海外网络或需自行配置镜像的工具都将被拦截；如需参与全球工具对比，可取消“必须国内直连”。',
+        '你选择了“已有稳定国际网络条件”，但又勾选了“必须国内网络直连”。系统会优先执行硬性直连过滤，所有依赖海外网络或需额外配置接口的工具都将被拦截；如需参与全球工具对比，可取消“必须国内直连”。',
       relatedConstraint: 'mustDomesticDirect',
       conflictingPreferenceField: 'network',
     });

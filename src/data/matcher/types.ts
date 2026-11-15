@@ -223,7 +223,7 @@ export interface MatcherRecommendationReport {
   assistantRecommendations: CandidateEvaluation[]; // 配套辅助推荐
   infrastructureNoteCandidates: CandidateEvaluation[]; // 被隔离的基础设施工具说明
   conditionalLocalCandidates: CandidateEvaluation[]; // 仅支持自托管或本地客户端（默认仍需外部 API），未入围严格本地推理主推荐
-  configurableNetworkCandidates: CandidateEvaluation[]; // 需自备国内 API 或镜像才可直连，未入围严格国内直连主推荐
+  configurableNetworkCandidates: CandidateEvaluation[]; // 需自备国内 API 或兼容接口才可直连，未入围严格国内直连主推荐
   unverifiedHardConstraintTools: CandidateEvaluation[]; // 硬性条件无法核实的工具
   excludedHardConstraintCount: number;
   preferenceConflicts: PreferenceConflictItem[];

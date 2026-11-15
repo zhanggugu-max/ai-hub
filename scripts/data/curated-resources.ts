@@ -115,7 +115,7 @@ const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
 ### 选型建议
 
 - 需要**代码生成极限准确率**且预算充足：优先测试 \`Muse Wonder\` 与 \`Claude Opus / Gemini 4\` 对比黄金测试集。
-- 需要**开源可自托管**且希望站在开源榜第一梯队：\`Muse Spark Open\` 与 \`Kimi K3\`、\`GLM 5.3\`、\`DeepSeek V4.1 Flash\` 构成当前开源最强第一阵营。`,
+- 需要**开源可自托管**且希望站在开源榜第一梯队：\`Muse Spark Open\` 与 \`Kimi K3\`、\`GLM 5.3\`、\`DeepSeek V4.1 Flash\` 构成当前开源领域主流前列阵营。`,
   },
   {
     slug: 'tutorial-ai-bots',
@@ -336,7 +336,7 @@ docker run -d -p 3000:8080 \\
     credibility_label: '海兰 AI 精选',
     content: `## 一句话生成应用：什么时候用谁？
 
-| 工具 | 最强领域 | 后端/数据库联动 | 推荐用法 |
+| 工具 | 优势领域 | 后端/数据库联动 | 推荐用法 |
 | :--- | :--- | :--- | :--- |
 | **v0.dev** | Next.js + shadcn/ui 高颜值前端页面与数据看板 | 支持 Vercel / Supabase 一键挂载环境变量 | 先用 v0 生成精致 UI 组件，再导出到 Cursor / Claude Code 接业务逻辑 |
 | **bolt.new** | 浏览器内 WebContainers 秒级预览完整全栈项目 | 内置多种模板与终端环境 | 快速验证 SaaS MVP、互动小工具与客户演示 Demo |
@@ -442,7 +442,7 @@ docker run -d -p 3000:8080 \\
     credibility_label: '海兰 AI 精选',
     content: `## GLM 5.3 与 Kimi K3 梯队定位拆解
 
-在当前 LMArena 开源及商用榜单中，国产第一梯队在中文理解、长上下文与工具调用稳定性上表现突出：
+在当前 LMArena 开源及商用榜单中，国产主流模型阵营在中文理解、长上下文与工具调用稳定性上表现突出：
 
 | 系列代表 | 突出强项 | 成本与部署建议 |
 | :--- | :--- | :--- |
@@ -764,7 +764,7 @@ server.tool('search_docs', { query: z.string() }, async ({ query }) => ({
     credibility_label: '来源：官方文档',
     content: `## Qwen3.x 家族分层选型建议
 
-1. **云端旗舰（Qwen3.8 Max / Qwen3.7 Max）**：在 LMArena 中文、代码与数学维度均处于第一梯队，适合复杂中文文档生成、RAG 精答与多工具编排。
+1. **云端旗舰（Qwen3.8 Max / Qwen3.7 Max）**：在 LMArena 中文、代码与数学维度均处于主流前列，适合复杂中文文档生成、RAG 精答与多工具编排。
 2. **旗舰开源 MoE（Qwen3.5 397B A17B）**：激活参数仅 17B 即可发挥接近旗舰闭源模型的能力，吞吐成本远低于同体量稠密模型。
 3. **中等显存主力（Qwen3.8 27B）**：单机多卡或高配工作站即可部署，兼具较强代码能力与高中文指令遵循度。`,
   },

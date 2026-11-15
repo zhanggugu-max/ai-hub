@@ -287,7 +287,7 @@ export function GuideClient() {
         </div>
       </section>
 
-      {/* 模块二：高频万能提示词“抄作业库” */}
+      {/* 模块二：高频通用提示词“抄作业库” */}
       <section aria-labelledby="prompt-templates-heading" className="space-y-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
           <div className="flex items-center gap-2">
@@ -296,7 +296,7 @@ export function GuideClient() {
               id="prompt-templates-heading"
               className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl"
             >
-              高频万能提示词“抄作业库”
+              高频通用提示词“抄作业库”
             </h2>
           </div>
           <p className="text-xs text-slate-500 sm:text-sm">
