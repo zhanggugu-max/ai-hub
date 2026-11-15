@@ -56,7 +56,7 @@ export default function MatcherPage() {
               </Badge>
             </div>
             <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
-              工具太多看花眼？花 30 秒回答你的场景、预算、动手门槛与网络习惯，直接帮你算出最顺手的 Top 3 组合。
+              工具太多看花眼？花 30 秒回答你的核心任务、预算、网络环境与使用形态，基于能力画像为你筛选真正能直接上手的主力工具与差异化备选，并透明核对费用、API、硬件与网络限制。
             </p>
           </div>
         </header>

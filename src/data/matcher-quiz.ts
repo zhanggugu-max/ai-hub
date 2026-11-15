@@ -1,596 +1,371 @@
-import type { NavTool, NavToolCategory } from '@/data/nav-tools';
+import type { NavTool } from '@/data/nav-tools';
+import type {
+  BudgetPreference,
+  HardConstraintKey,
+  MatcherAnswersV2,
+  MatcherRecommendationReport,
+  NetworkPreference,
+  SceneKey,
+  TaskKey,
+  WorkModePreference,
+} from '@/data/matcher/types';
+import { evaluateToolMatches, SCENE_META, TASK_META } from '@/lib/matcher/engine';
 
-export type QuizQuestionId = 'scene' | 'budget' | 'skill' | 'network' | 'workMode';
-
-export interface QuizOption {
-  value: string;
+export interface SceneQuizOption {
+  value: SceneKey;
   label: string;
-  shortTag: string;
+  description: string;
+  tag: string;
+}
+
+export interface TaskQuizOption {
+  value: TaskKey;
+  label: string;
+  description: string;
+  badge?: string;
+}
+
+export interface DimensionQuizOption<T extends string> {
+  value: T;
+  label: string;
+  description: string;
+  isNoPreference?: boolean;
+}
+
+export interface HardConstraintOption {
+  key: HardConstraintKey;
+  label: string;
   description: string;
 }
 
-export interface QuizQuestion {
-  id: QuizQuestionId;
-  stepNumber: number;
-  title: string;
-  subtitle: string;
-  maxWeight: number;
-  options: QuizOption[];
-}
-
-export type MatcherAnswers = Partial<Record<QuizQuestionId, string>>;
-
-export interface MatchedToolResult {
-  tool: NavTool;
-  score: number;
-  matchPercent: number;
-  reasons: string[];
-}
-
-export const MATCHER_QUESTIONS: QuizQuestion[] = [
+export const SCENE_QUIZ_OPTIONS: SceneQuizOption[] = [
   {
-    id: 'scene',
-    stepNumber: 1,
-    title: '你目前最想让 AI 帮你解决哪类事情？',
-    subtitle: '核心使用场景决定匹配基调（最高权重 +50 分）',
-    maxWeight: 50,
-    options: [
-      {
-        value: 'A',
-        label: '写代码 / 修 Bug / 搭网站',
-        shortTag: '编程建站',
-        description: '需要辅助写项目代码、排查报错或快速搭一个可上线网站。',
-      },
-      {
-        value: 'B',
-        label: '日常办公 / 自动整理文件 / 写文档 PPT',
-        shortTag: '办公自动化',
-        description: '想把整理文件、写周报做 PPT、跨软件琐事交给桌面助手。',
-      },
-      {
-        value: 'C',
-        label: '查资料 / 读长论文 / 写深度分析报告',
-        shortTag: '检索科研',
-        description: '看重实时联网溯源、大篇幅 PDF 文档解析与对比调研。',
-      },
-      {
-        value: 'D',
-        label: '做图片 / 剪视频 / 配音写歌',
-        shortTag: '多模态创作',
-        description: '需要商业海报、AI 视频、人声配音克隆或 AI 写歌编曲。',
-      },
-      {
-        value: 'E',
-        label: '低成本调用各种大模型 API / 折腾部署',
-        shortTag: 'API 与部署',
-        description: '想申请高性价比 API Key、聚合切换多模型或本地部署。',
-      },
-    ],
+    value: 'coding_web',
+    label: SCENE_META.coding_web.label,
+    description: SCENE_META.coding_web.description,
+    tag: '最热门',
   },
   {
-    id: 'budget',
-    stepNumber: 2,
-    title: '你的预算偏好是怎样的？',
-    subtitle: '结合收费模式为你筛选最划算的入手方式（+25 分）',
-    maxWeight: 25,
-    options: [
-      {
-        value: 'A',
-        label: '纯白嫖 / 优先免费额度',
-        shortTag: '免费 / 开源优先',
-        description: '优先开源免费软件或官方每日/新客赠送免费额度的工具。',
-      },
-      {
-        value: 'B',
-        label: '按实际用量付费，不包月',
-        shortTag: '按量付费不包月',
-        description: '用多少算多少，不想每月被 20 美元固定月费绑定。',
-      },
-      {
-        value: 'C',
-        label: '只要效果最强，愿意付费订阅',
-        shortTag: '旗舰效果优先',
-        description: '看重最省心或最顶尖的旗舰表现，接受按月订阅会员。',
-      },
-    ],
+    value: 'office_efficiency',
+    label: SCENE_META.office_efficiency.label,
+    description: SCENE_META.office_efficiency.description,
+    tag: '高频刚需',
   },
   {
-    id: 'skill',
-    stepNumber: 3,
-    title: '你的动手折腾能力如何？',
-    subtitle: '匹配与你技术背景最合拍的工具形态（+20 分）',
-    maxWeight: 20,
-    options: [
-      {
-        value: 'A',
-        label: '纯小白，打开网页或安装软件就能直接用',
-        shortTag: '零门槛开箱即用',
-        description: '不想碰黑框命令行或环境变量，最好点开就能用。',
-      },
-      {
-        value: 'B',
-        label: '会一点基础操作，愿意跟着教程配 API Key 或插件',
-        shortTag: '可配 Key / 插件',
-        description: '能照着教程复制粘贴 Key 或装 VS Code / 桌面客户端。',
-      },
-      {
-        value: 'C',
-        label: '极客玩家，喜欢本地部署、命令行和高度自定义',
-        shortTag: '极客 / 本地自定义',
-        description: '偏好终端 CLI、Docker 私有化部署与高自由度开源工具。',
-      },
-    ],
+    value: 'desktop_agent',
+    label: SCENE_META.desktop_agent.label,
+    description: SCENE_META.desktop_agent.description,
+    tag: 'Agent 实操',
   },
   {
-    id: 'network',
-    stepNumber: 4,
-    title: '你的网络使用习惯是？',
-    subtitle: '兼顾国内直连可用性与海外旗舰覆盖（+20 分）',
-    maxWeight: 20,
-    options: [
-      {
-        value: 'A',
-        label: '希望国内网络直接打开，不折腾复杂环境',
-        shortTag: '国内直连优先',
-        description: '首选国产主力平台或运行在自己电脑上的本地工具。',
-      },
-      {
-        value: 'B',
-        label: '国内外主流工具都能正常访问，只看综合实力',
-        shortTag: '全球无限制优选',
-        description: '可顺畅访问海内外所有平台，按综合能力择优匹配。',
-      },
-    ],
+    value: 'research_learning',
+    label: SCENE_META.research_learning.label,
+    description: SCENE_META.research_learning.description,
+    tag: '可溯源',
   },
   {
-    id: 'workMode',
-    stepNumber: 5,
-    title: '你更习惯哪种工作方式？',
-    subtitle: '决定优先推荐网页端、桌面软件还是编辑器工作流（+15 分）',
-    maxWeight: 15,
-    options: [
-      {
-        value: 'A',
-        label: '网页端随时打开即用，不占电脑内存',
-        shortTag: '网页端轻量即用',
-        description: '打开浏览器即可运行，换电脑也能随时登录继续。',
-      },
-      {
-        value: 'B',
-        label: '装在电脑桌面上，能直接帮我操作本地文件',
-        shortTag: '桌面本地操作',
-        description: '常驻桌面或可读写电脑文件夹，减少来回上传下载。',
-      },
-      {
-        value: 'C',
-        label: '嵌入到我现有的编辑器（如 VS Code）或自动化流程里',
-        shortTag: '嵌入编辑器 / 工作流',
-        description: '直接整合进代码编辑器、终端命令行或 API/节点编排流。',
-      },
-    ],
+    value: 'workflow_automation',
+    label: SCENE_META.workflow_automation.label,
+    description: SCENE_META.workflow_automation.description,
+    tag: '流程提效',
+  },
+  {
+    value: 'model_local',
+    label: SCENE_META.model_local.label,
+    description: SCENE_META.model_local.description,
+    tag: '进阶可控',
+  },
+  {
+    value: 'visual_creation',
+    label: SCENE_META.visual_creation.label,
+    description: SCENE_META.visual_creation.description,
+    tag: '创意产出',
+  },
+  {
+    value: 'audio_meeting',
+    label: SCENE_META.audio_meeting.label,
+    description: SCENE_META.audio_meeting.description,
+    tag: '听写配音',
   },
 ];
 
-// 工具特征分类集合（严格对应 src/data/nav-tools.ts 中的 id）
-const CLI_AND_COMPLEX_OSS_IDS = new Set([
-  'claude-code',
-  'openai-codex',
-  'gemini-cli',
-  'qwen-code',
-  'mcp-protocol',
-  'ollama',
-  'openclaw',
-  'hermes-agent',
-  'hermes-agent-desktop',
-  'nanobot',
-  'gas-town-orchestrator',
-  'trycua-cua',
-  'ui-tars-desktop',
-  'n8n',
-  'comfyui',
-]);
-
-const TURNKEY_FRIENDLY_IDS = new Set([
-  'tencent-workbuddy',
-  'alibaba-qoderwork',
-  'bytedance-traework',
-  'zhipu-autoclaw',
-  'minimax-agent',
-  'manus-ai',
-  'todesk-ai',
-  'lindy-ai',
-  'coze',
-  'gamma-ai',
-  'lovable-dev',
-  'vercel-v0',
-  'bolt-new',
-  'replit-agent',
-  'perplexity',
-  'kimi-research',
-  'notebooklm',
-  'metaso-ai',
-  'kling-ai',
-  'jimeng-seedance',
-  'google-veo',
-  'runway-gen4',
-  'midjourney-web',
-  'recraft-ai',
-  'suno-music',
-  'elevenlabs-tts',
-  'tongyi-tingwu',
-  'granola-notes',
-  'lm-studio',
-  'trae',
-  'cursor',
-]);
-
-const PLUGIN_AND_API_FRIENDLY_IDS = new Set([
-  'cherry-studio',
-  'cline-roo-code',
-  'cursor',
-  'trae',
-  'dify',
-  'n8n',
-  'fastgpt',
-  'lm-studio',
-  'openrouter',
-  'siliconflow',
-  'deepseek-platform',
-  'volcengine-ark',
-  'aliyun-bailian',
-  'fal-replicate',
-  'obsidian-ai',
-  'zotero-ai',
-  'lava-workspace',
-  'claude-cowork',
-  'dyad-local',
-  'google-antigravity',
-]);
-
-const DOMESTIC_DIRECT_IDS = new Set([
-  'tencent-workbuddy',
-  'alibaba-qoderwork',
-  'bytedance-traework',
-  'zhipu-autoclaw',
-  'minimax-agent',
-  'deepseek-harness',
-  'todesk-ai',
-  'trae',
-  'qwen-code',
-  'dify',
-  'coze',
-  'fastgpt',
-  'siliconflow',
-  'deepseek-platform',
-  'volcengine-ark',
-  'aliyun-bailian',
-  'kimi-research',
-  'metaso-ai',
-  'kling-ai',
-  'jimeng-seedance',
-  'tongyi-tingwu',
-  // 本地运行/客户端类软件国内可顺畅使用
-  'cherry-studio',
-  'ollama',
-  'lm-studio',
-  'dyad-local',
-  'obsidian-ai',
-  'zotero-ai',
-  'fish-audio',
-  'ui-tars-desktop',
-  'nanobot',
-]);
-
-const OVERSEAS_CLOUD_RESTRICTED_IDS = new Set([
-  'google-antigravity',
-  'openai-codex-app',
-  'openai-dots',
-  'grok-bot',
-  'meta-muse-agent',
-  'claude-cowork',
-  'lindy-ai',
-  'manus-ai',
-  'claude-code',
-  'openai-codex',
-  'gemini-cli',
-  'openrouter',
-  'official-frontier-apis',
-  'meta-muse',
-  'xai-grok',
-  'perplexity',
-  'notebooklm',
-  'grok-deepsearch',
-  'elicit-research',
-  'lovable-dev',
-  'vercel-v0',
-  'bolt-new',
-  'replit-agent',
-  'gamma-ai',
-  'google-veo',
-  'runway-gen4',
-  'midjourney-web',
-  'recraft-ai',
-  'suno-music',
-  'elevenlabs-tts',
-  'granola-notes',
-]);
-
-const WEB_FIRST_IDS = new Set([
-  'coze',
-  'openrouter',
-  'siliconflow',
-  'deepseek-platform',
-  'volcengine-ark',
-  'aliyun-bailian',
-  'fal-replicate',
-  'perplexity',
-  'kimi-research',
-  'arxiv-daily',
-  'notebooklm',
-  'grok-deepsearch',
-  'metaso-ai',
-  'elicit-research',
-  'huggingface-hub',
-  'lovable-dev',
-  'vercel-v0',
-  'bolt-new',
-  'replit-agent',
-  'gamma-ai',
-  'kling-ai',
-  'google-veo',
-  'jimeng-seedance',
-  'runway-gen4',
-  'midjourney-web',
-  'recraft-ai',
-  'suno-music',
-  'elevenlabs-tts',
-  'tongyi-tingwu',
-  'manus-ai',
-  'minimax-agent',
-  'lindy-ai',
-  'openai-dots',
-  'grok-bot',
-]);
-
-const DESKTOP_APP_IDS = new Set([
-  'cherry-studio',
-  'cursor',
-  'trae',
-  'ollama',
-  'lm-studio',
-  'dyad-local',
-  'obsidian-ai',
-  'zotero-ai',
-  'granola-notes',
-  'fish-audio',
-]);
-
-const EMBEDDED_ORCHESTRATION_IDS = new Set([
-  'claude-code',
-  'cline-roo-code',
-  'cursor',
-  'trae',
-  'openai-codex',
-  'gemini-cli',
-  'mcp-protocol',
-  'qwen-code',
-  'dify',
-  'n8n',
-  'comfyui',
-  'fastgpt',
-  'hermes-agent',
-  'nanobot',
-  'openrouter',
-  'siliconflow',
-  'deepseek-platform',
-  'official-frontier-apis',
-  'meta-muse',
-  'xai-grok',
-  'volcengine-ark',
-  'aliyun-bailian',
-  'fal-replicate',
-  'gas-town-orchestrator',
-  'lava-workspace',
-  'trycua-cua',
-  'obsidian-ai',
-  'zotero-ai',
-]);
-
-const SCENE_CATEGORIES: Record<string, NavToolCategory[]> = {
-  A: ['coding', 'app-builder'],
-  B: ['desktop-agents', 'workflow'],
-  C: ['research'],
-  D: ['multimodal-visual', 'audio-productivity'],
-  E: ['api-compute', 'workflow'],
+export const SCENE_TASK_OPTIONS: Record<SceneKey, TaskQuizOption[]> = {
+  coding_web: [
+    {
+      value: 'website_build',
+      label: TASK_META.website_build.label,
+      description: '用一句话描述想法直接生成网站页面、交互原型与前后端部署',
+      badge: '建站主力',
+    },
+    {
+      value: 'app_prototyping',
+      label: TASK_META.app_prototyping.label,
+      description: '快速做出可演示的 MVP 应用、登录与数据库原型并迭代发布',
+    },
+    {
+      value: 'code_editing',
+      label: TASK_META.code_editing.label,
+      description: '在编辑器中实时补全代码、多文件改写、局部重构与项目问答',
+    },
+    {
+      value: 'debugging',
+      label: TASK_META.debugging.label,
+      description: '定位复杂报错、编写/修复单元测试并做代码审查',
+    },
+    {
+      value: 'agent_coding',
+      label: TASK_META.agent_coding.label,
+      description: '把完整需求拆解给智能体自主跑通改码、测试与交付流程',
+    },
+  ],
+  office_efficiency: [
+    {
+      value: 'office_writing',
+      label: TASK_META.office_writing.label,
+      description: '长文报告起草、营销文案改写、格式整理与多文件汇总',
+      badge: '高频办公',
+    },
+    {
+      value: 'ppt_making',
+      label: TASK_META.ppt_making.label,
+      description: '一键将思路或文档转化为结构清晰、可微调导出的演示文稿',
+    },
+    {
+      value: 'excel_data',
+      label: TASK_META.excel_data.label,
+      description: '表格清洗统计、公式处理、财务报表整理与洞察汇总',
+    },
+    {
+      value: 'file_automation',
+      label: TASK_META.file_automation.label,
+      description: '批量分类命名本地文件夹、整理桌面文档并跨文档协同处理',
+    },
+  ],
+  desktop_agent: [
+    {
+      value: 'desktop_automation',
+      label: TASK_META.desktop_automation.label,
+      description: '在电脑桌面多软件之间自主点击、读写文件并执行多步待办',
+      badge: '桌面接管',
+    },
+    {
+      value: 'browser_automation',
+      label: TASK_META.browser_automation.label,
+      description: '自动打开网页收集信息、填表下单、比价或定时巡检状态',
+    },
+  ],
+  research_learning: [
+    {
+      value: 'literature_search',
+      label: TASK_META.literature_search.label,
+      description: '带精准学术引用与论文出处检索，降低模型幻觉风险',
+      badge: '学术规范',
+    },
+    {
+      value: 'paper_reading',
+      label: TASK_META.paper_reading.label,
+      description: '上传 PDF/文献资料做精读拆解、图表追问与多篇对比梳理',
+    },
+    {
+      value: 'deep_research',
+      label: TASK_META.deep_research.label,
+      description: '自动开展多轮全网检索与交叉核验，产出结构化研究报告',
+    },
+  ],
+  workflow_automation: [
+    {
+      value: 'rag_knowledge',
+      label: TASK_META.rag_knowledge.label,
+      description: '把内部手册、制度或专业文档切片入库并搭建精准问答机器人',
+      badge: '知识库',
+    },
+    {
+      value: 'workflow_auto',
+      label: TASK_META.workflow_auto.label,
+      description: '可视化连接触发器、大模型与第三方软件，实现自动化流水线',
+    },
+  ],
+  model_local: [
+    {
+      value: 'api_management',
+      label: TASK_META.api_management.label,
+      description: '统一接入多厂商大模型 API、管理 Key 额度、切换与路由调用',
+      badge: 'API 聚合',
+    },
+    {
+      value: 'local_deployment',
+      label: TASK_META.local_deployment.label,
+      description: '在本地电脑或私有服务器上部署开源大模型权重与离线推理服务',
+      badge: '隐私离线',
+    },
+  ],
+  visual_creation: [
+    {
+      value: 'image_generation',
+      label: TASK_META.image_generation.label,
+      description: '根据提示词生成海报、插画、商业摄影与品牌设计稿',
+      badge: '审美出图',
+    },
+    {
+      value: 'image_editing',
+      label: TASK_META.image_editing.label,
+      description: '基于节点/蒙版/矢量规范执行换背景、人物一致与局部精修',
+    },
+    {
+      value: 'video_generation',
+      label: TASK_META.video_generation.label,
+      description: '文字或首尾帧生成短片、控制运镜与音画同步镜头效果',
+    },
+  ],
+  audio_meeting: [
+    {
+      value: 'meeting_notes',
+      label: TASK_META.meeting_notes.label,
+      description: '自动记录会议纪要、提炼重点决议、区分发言人与待办事项',
+      badge: '职场常用',
+    },
+    {
+      value: 'speech_to_text',
+      label: TASK_META.speech_to_text.label,
+      description: '将访谈、课程或音视频录音准确转写为带时间戳的文本',
+    },
+    {
+      value: 'audio_music',
+      label: TASK_META.audio_music.label,
+      description: 'AI 拟真配音、多语言声音克隆、播客合成及人声歌曲创作',
+    },
+  ],
 };
 
-const SCENE_SPECIAL_BONUS: Record<string, Record<string, number>> = {
-  A: { 'gas-town-orchestrator': 42, 'dify': 26, 'fastgpt': 24 },
-  B: { 'gamma-ai': 46, 'cherry-studio': 38, 'obsidian-ai': 40, 'tongyi-tingwu': 38, 'granola-notes': 38 },
-  C: { 'kimi-research': 50, 'perplexity': 50, 'notebooklm': 50, 'metaso-ai': 48, 'elicit-research': 48 },
-  D: { 'comfyui': 48 },
-  E: { 'cherry-studio': 44, 'ollama': 48, 'lm-studio': 46, 'dify': 46, 'n8n': 44, 'fastgpt': 44 },
+export const BUDGET_OPTIONS: DimensionQuizOption<BudgetPreference>[] = [
+  {
+    value: 'free_or_low_cost',
+    label: '免费额度够用 / 低成本试错',
+    description: '希望先零门槛或低花费试用，免费体验档能满足轻中度使用',
+  },
+  {
+    value: 'completely_free',
+    label: '尽量完全免费（不充 API、不买会员）',
+    description: '倾向软件本体与日常核心算力均免费，或仅依赖本机已有硬件运行',
+  },
+  {
+    value: 'pay_as_you_go',
+    label: '接受按量付费 / 自带 API Key',
+    description: '愿意为开源客户端或开发框架自行绑定 DeepSeek/OpenAI 等 Key，按用量结费',
+  },
+  {
+    value: 'subscription_ok',
+    label: '接受按月订阅，省心开箱即用',
+    description: '不介意为高效主力工具付费订阅，只希望账号打包好算力，免去折腾 Key',
+  },
+  {
+    value: 'self_host_control',
+    label: '追求开源自托管 / 完全数据可控',
+    description: '优先开源许可或支持自有服务器/本机私有控制，数据不随便进商业云端',
+  },
+  {
+    value: 'no_preference',
+    label: '暂不限制预算偏好',
+    description: '不限免费或付费方式，优先把当前任务最能打的主力工具排出来',
+    isNoPreference: true,
+  },
+];
+
+export const NETWORK_OPTIONS: DimensionQuizOption<NetworkPreference>[] = [
+  {
+    value: 'domestic_direct',
+    label: '必须或优先国内网络直连',
+    description: '国内网络打开即用，不折腾跨境代理与海外支付账号',
+  },
+  {
+    value: 'international_ok',
+    label: '具备国际网络与海外账号条件',
+    description: '可以稳定使用国际网络及海外信用卡/账号，优先追求海外原厂前沿能力',
+  },
+  {
+    value: 'no_mind_setup',
+    label: '网络或接口都能配合微调',
+    description: '只要工具足够强，无论国内直连、兼容国内 API 还是海外连接都可接受',
+  },
+  {
+    value: 'no_preference',
+    label: '暂不考虑网络差异',
+    description: '跳过网络维度打分，按任务能力与预算直接排序',
+    isNoPreference: true,
+  },
+];
+
+export const WORK_MODE_OPTIONS: DimensionQuizOption<WorkModePreference>[] = [
+  {
+    value: 'web_simple',
+    label: '打开网页即用，尽量免安装',
+    description: '不折腾本地环境与命令行，浏览器里直接完成任务',
+  },
+  {
+    value: 'desktop_client',
+    label: '安装独立桌面客户端 / App',
+    description: '希望有桌面端可方便读写本地文件夹，同时界面直观不晦涩',
+  },
+  {
+    value: 'ide_editor',
+    label: '直接在 IDE / 代码编辑器里用',
+    description: '习惯 VS Code / Cursor 类编辑器工作流，注重代码补全与工程感知',
+  },
+  {
+    value: 'cli_terminal',
+    label: '终端命令行（CLI）高频驱动',
+    description: '开发者熟练使用命令行与 Git，偏好轻量高效的 CLI Agent 工作流',
+  },
+  {
+    value: 'local_custom',
+    label: '本地运行 / 私有部署 / 极客自定义',
+    description: '偏好自己部署框架、接本地模型、控制工作流与高度可定制能力',
+  },
+  {
+    value: 'no_preference',
+    label: '不限软件形态与部署方式',
+    description: '网页、桌面、IDE 或命令行均可，由最适合任务的工具决定',
+    isNoPreference: true,
+  },
+];
+
+export const HARD_CONSTRAINT_OPTIONS: Record<
+  'budget' | 'network' | 'workMode',
+  HardConstraintOption
+> = {
+  budget: {
+    key: 'mustCompletelyFree',
+    label: '硬性筛选：必须完全免费（软件免费 + 模型免付费或用本机硬件）',
+    description: '严格排除需订阅、仅有有限试用额度、或必须充值自带付费 API Key 的工具；若无则诚实留空',
+  },
+  network: {
+    key: 'mustDomesticDirect',
+    label: '硬性筛选：必须国内网络直连可用',
+    description: '严格拦截需国际网络的工具，以及国内网络状态尚未核实的工具（不默认假定可直连）',
+  },
+  workMode: {
+    key: 'mustLocalRun',
+    label: '硬性筛选：必须支持本地运行或私有化部署',
+    description: '严格排除仅支持云端 SaaS / 云端 Agent 或依赖官方云端运行的工具；未核实工具不入围',
+  },
 };
 
-function scoreTool(
-  tool: NavTool,
-  answers: MatcherAnswers
-): { score: number; reasons: string[] } {
-  let score = 0;
-  const reasons: string[] = [];
+export const DEFAULT_MATCHER_ANSWERS: MatcherAnswersV2 = {
+  scene: 'coding_web',
+  task: 'website_build',
+  budget: 'free_or_low_cost',
+  network: 'domestic_direct',
+  workMode: 'web_simple',
+  hardConstraints: {
+    mustLocalRun: false,
+    mustDomesticDirect: false,
+    mustCompletelyFree: false,
+  },
+};
 
-  // 1. 核心场景 (+50)
-  const sceneChoice = answers.scene ?? 'B';
-  const targetCats = SCENE_CATEGORIES[sceneChoice] ?? [];
-  const specialSceneBonus = SCENE_SPECIAL_BONUS[sceneChoice]?.[tool.id];
-
-  if (targetCats[0] === tool.category) {
-    score += 50;
-  } else if (targetCats.includes(tool.category)) {
-    score += 46;
-  } else if (specialSceneBonus) {
-    score += specialSceneBonus;
-  } else {
-    score += 6;
-  }
-
-  const sceneOption = MATCHER_QUESTIONS[0].options.find((o) => o.value === sceneChoice);
-  if (sceneOption && (targetCats.includes(tool.category) || specialSceneBonus)) {
-    reasons.push(`高度契合「${sceneOption.shortTag}」核心诉求：${tool.tagline}`);
-  }
-
-  // 2. 预算偏好 (+25)
-  const budgetChoice = answers.budget ?? 'A';
-  if (budgetChoice === 'A') {
-    if (tool.pricingType === '开源免费') {
-      score += 25;
-      reasons.push('属于「开源免费」方案，无需长期付费订阅，试错成本为零。');
-    } else if (tool.pricingType === '有免费额度') {
-      score += 22;
-      reasons.push('提供「有免费额度」入门体验，适合先零成本跑通日常需求。');
-    } else if (tool.pricingType === '按量付费') {
-      score += 6;
-    } else {
-      score -= 18;
-    }
-  } else if (budgetChoice === 'B') {
-    if (tool.pricingType === '按量付费') {
-      score += 25;
-      reasons.push('支持「按量付费」，用多少扣多少，比每月固定月费更省钱。');
-    } else if (tool.pricingType === '有免费额度') {
-      score += 20;
-      reasons.push('兼具「有免费额度」与灵活按需扩展能力，无需刚性包月。');
-    } else if (tool.pricingType === '开源免费') {
-      score += 14;
-    } else {
-      score -= 12;
-    }
-  } else {
-    // C: 效果优先，愿意订阅
-    if (tool.featured) score += 10;
-    if (tool.pricingType === '订阅制') {
-      score += 18;
-      reasons.push('旗舰级成熟商用方案，体验省心稳定，付费换效率回报最高。');
-    } else if (tool.pricingType === '按量付费') {
-      score += 15;
-    } else if (tool.pricingType === '有免费额度') {
-      score += 14;
-      if (tool.featured) {
-        reasons.push('属于该场景官方精选首选，综合体验稳居一线水准。');
-      }
-    } else {
-      score += 8;
-    }
-  }
-
-  // 3. 动手能力 (+20)
-  const skillChoice = answers.skill ?? 'A';
-  if (skillChoice === 'A') {
-    if (CLI_AND_COMPLEX_OSS_IDS.has(tool.id)) {
-      score -= 26;
-    } else if (TURNKEY_FRIENDLY_IDS.has(tool.id)) {
-      score += 20;
-      reasons.push('上手门槛极低，无需敲命令行即可开箱即用。');
-    } else {
-      score += 10;
-    }
-  } else if (skillChoice === 'B') {
-    if (PLUGIN_AND_API_FRIENDLY_IDS.has(tool.id)) {
-      score += 20;
-      reasons.push('配置清晰可拓展，跟着教程填入 Key 或装好插件即可长久使用。');
-    } else if (tool.id === 'gas-town-orchestrator' || tool.id === 'nanobot') {
-      score += 4;
-    } else {
-      score += 13;
-    }
-  } else {
-    // C: 极客玩家
-    if (CLI_AND_COMPLEX_OSS_IDS.has(tool.id) || tool.pricingType === '开源免费') {
-      score += 20;
-      reasons.push('支持开源透明、命令行或本地高度自定义，非常合极客胃口。');
-    } else {
-      score += 8;
-    }
-  }
-
-  // 4. 网络使用习惯 (+20)
-  const networkChoice = answers.network ?? 'A';
-  if (networkChoice === 'A') {
-    if (DOMESTIC_DIRECT_IDS.has(tool.id)) {
-      score += 20;
-      reasons.push('支持国内直连或纯本地电脑运行，无需折腾复杂网络即可稳定访问。');
-    } else if (OVERSEAS_CLOUD_RESTRICTED_IDS.has(tool.id)) {
-      score -= 16;
-    } else {
-      score += 9;
-    }
-  } else {
-    score += tool.featured ? 20 : 17;
-  }
-
-  // 5. 工作方式 (+15)
-  const workModeChoice = answers.workMode ?? 'A';
-  if (workModeChoice === 'A') {
-    if (WEB_FIRST_IDS.has(tool.id)) {
-      score += 15;
-      reasons.push('打开浏览器就能随时运行，不占本机算力与内存。');
-    } else if (tool.category === 'desktop-agents') {
-      score += 4;
-    } else {
-      score += 7;
-    }
-  } else if (workModeChoice === 'B') {
-    if (tool.category === 'desktop-agents' || DESKTOP_APP_IDS.has(tool.id)) {
-      score += 15;
-      reasons.push('具备桌面端或本地文件读写能力，无需频繁复制粘贴。');
-    } else {
-      score += 5;
-    }
-  } else {
-    if (EMBEDDED_ORCHESTRATION_IDS.has(tool.id)) {
-      score += 15;
-      reasons.push('可直接嵌入你的编辑器、终端或自动化编排流程，长线效率提升明显。');
-    } else {
-      score += 5;
-    }
-  }
-
-  // 轻微精选加权用于打破同分（+2）
-  if (tool.featured) {
-    score += 2;
-  }
-
-  // 若推荐理由少于 2 条，补充默认亮点
-  if (reasons.length === 0) {
-    reasons.push(tool.tagline);
-  }
-
-  return { score, reasons: reasons.slice(0, 3) };
-}
-
-export function computeToolMatches(
+export function evaluateMatcherReport(
   tools: NavTool[],
-  answers: MatcherAnswers
-): MatchedToolResult[] {
-  const scored = tools.map((tool) => {
-    const { score, reasons } = scoreTool(tool, answers);
-    // 理论满分 132 (50+25+20+20+15+2)，映射到 62%~99% 直观区间
-    const matchPercent = Math.max(60, Math.min(99, Math.round((score / 132) * 100)));
-    return {
-      tool,
-      score,
-      matchPercent,
-      reasons,
-    };
-  });
-
-  scored.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    if (Boolean(b.tool.featured) !== Boolean(a.tool.featured)) {
-      return b.tool.featured ? 1 : -1;
-    }
-    return a.tool.name.localeCompare(b.tool.name, 'zh-CN');
-  });
-
-  return scored;
+  answers: MatcherAnswersV2,
+): MatcherRecommendationReport {
+  return evaluateToolMatches(tools, answers);
 }
