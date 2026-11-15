@@ -64,6 +64,10 @@ export default function GuidePage() {
               不讲晦涩算法原理，用大白话带你选对工具、写好提示词、5 分钟跑通第一个 API。
             </p>
           </div>
+
+          <blockquote className="max-w-3xl rounded-xl border border-slate-200/80 border-l-[3px] border-l-emerald-500/60 bg-white/85 px-4 py-3.5 text-xs leading-relaxed text-slate-600 shadow-2xs sm:px-5 sm:py-4 sm:text-sm">
+            {SITE_BRAND.motto}
+          </blockquote>
         </header>
 
         <GuideClient />

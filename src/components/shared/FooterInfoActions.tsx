@@ -61,6 +61,9 @@ export function FooterInfoActions() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-xs leading-relaxed text-slate-600 sm:text-sm">
+            <blockquote className="rounded-lg border border-slate-200/80 border-l-[3px] border-l-blue-400/70 bg-slate-50/70 px-4 py-3 text-slate-600">
+              {SITE_BRAND.motto}
+            </blockquote>
             <div className="rounded-lg bg-slate-50 p-3.5">
               <div className="mb-1 font-semibold text-slate-900">1. 定位与内容形式</div>
               <p>

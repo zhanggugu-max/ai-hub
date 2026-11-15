@@ -1,6 +1,8 @@
 export const SITE_BRAND = {
   name: '海兰 AI',
   slogan: '选对 AI，用好 AI。',
+  motto:
+    '面对层出不穷的 AI 工具，不必焦虑自己用不过来。工具是试不完的，知识也是学不完的——与其盲目收藏『全能神器』，不如先挑一两款真正契合当下需求的工具，把眼前的事做好。',
   positioning: 'AI 工具选型与实战指南',
   shortTag: '选型指南',
   defaultTitle: '海兰 AI｜工具导航、模型榜单与实战教程',
