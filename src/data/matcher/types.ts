@@ -180,12 +180,21 @@ export interface DimensionScoreDetail {
   note: string;
 }
 
+export interface PreferenceConflictItem {
+  severity: 'conflict' | 'narrowing';
+  title: string;
+  description: string;
+  relatedConstraint: HardConstraintKey;
+  conflictingPreferenceField: 'budget' | 'network' | 'workMode';
+}
+
 export interface CandidateEvaluation {
   tool: MergedToolProfile;
   roleForTask: ToolRole | 'none';
   taskCapability: CapabilityScore | 'unknown';
   score: number; // 0 ~ 100（有效维度归一化）
   matchPercent: number; // 与 score 同步的 0~100 规则评分
+  selectionRoleLabel?: string; // 仅用于备选路线说明，不影响实际评分
   dimensionBreakdown: DimensionScoreDetail[];
   dataCompleteness: number; // 0 ~ 100（独立计算，不混入匹配分）
   confidence: ConfidenceLevel;
@@ -213,8 +222,11 @@ export interface MatcherRecommendationReport {
   primaryRecommendations: CandidateEvaluation[]; // Top 1~3，宁缺毋滥
   assistantRecommendations: CandidateEvaluation[]; // 配套辅助推荐
   infrastructureNoteCandidates: CandidateEvaluation[]; // 被隔离的基础设施工具说明
+  conditionalLocalCandidates: CandidateEvaluation[]; // 仅支持自托管或本地客户端（默认仍需外部 API），未入围严格本地推理主推荐
+  configurableNetworkCandidates: CandidateEvaluation[]; // 需自备国内 API 或镜像才可直连，未入围严格国内直连主推荐
   unverifiedHardConstraintTools: CandidateEvaluation[]; // 硬性条件无法核实的工具
   excludedHardConstraintCount: number;
+  preferenceConflicts: PreferenceConflictItem[];
   summaryAdvice: string;
   noPrimaryMatchReason: string | null;
   engineNotice: string;

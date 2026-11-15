@@ -10,6 +10,7 @@ import type {
   MatcherRecommendationReport,
   MergedToolProfile,
   NetworkPreference,
+  PreferenceConflictItem,
   SceneKey,
   TaskKey,
   ToolRole,
@@ -775,24 +776,18 @@ function checkHardConstraints(
 
   if (constraints.mustLocalRun) {
     if (tool.deploymentModes.length === 0) {
-      unverifiedReasons.push('未核实是否支持本地运行或私有化部署');
-    } else {
-      const hasLocalInferenceOrSelfHosted =
-        tool.deploymentModes.includes('local_inference') ||
-        tool.deploymentModes.includes('self_hosted');
-      const isPureLocalClient =
-        tool.deploymentModes.includes('local_client') &&
-        !tool.deploymentModes.includes('cloud_saas') &&
-        !tool.deploymentModes.includes('cloud_agent') &&
-        tool.modelApiBilling !== 'included_quota' &&
-        tool.modelApiBilling !== 'subscription_included';
-
-      if (!hasLocalInferenceOrSelfHosted && !isPureLocalClient) {
-        if (tool.deploymentModes.includes('local_client')) {
-          failedReasons.push('仅为连云桌面客户端，核心模型与服务依赖官方云端运行，不满足严格本地/私有运行要求');
-        } else {
-          failedReasons.push('仅支持云端 SaaS / 云端 Agent 运行，不支持本地运行或私有部署');
-        }
+      unverifiedReasons.push('未核实是否支持本地模型推理或私有部署');
+    } else if (!tool.deploymentModes.includes('local_inference')) {
+      if (tool.deploymentModes.includes('self_hosted')) {
+        failedReasons.push(
+          '仅支持自托管服务端部署（仍需配合云端 API 或另行接入本地 Ollama），不属于开箱本地模型推理工具',
+        );
+      } else if (tool.deploymentModes.includes('local_client')) {
+        failedReasons.push(
+          '仅提供安装在本机的桌面或命令行客户端（模型推理在云端或外部 API 完成），不满足“必须本地模型推理”要求',
+        );
+      } else {
+        failedReasons.push('仅支持云端 SaaS / 云端 Agent 运行，不支持本地模型推理');
       }
     }
   }
@@ -800,6 +795,10 @@ function checkHardConstraints(
   if (constraints.mustDomesticDirect) {
     if (tool.networkAvailability === 'unknown') {
       unverifiedReasons.push('未核实国内网络直连可用性');
+    } else if (tool.networkAvailability === 'partial_or_byok') {
+      failedReasons.push(
+        '需用户自行配置国内大模型 API、本地 Ollama 或镜像站才可稳定直连，不属于开箱完全国内直连产品',
+      );
     } else if (tool.networkAvailability === 'international_required') {
       failedReasons.push('官方服务依赖国际网络环境，不满足“必须国内网络直连”硬性要求');
     }
@@ -915,17 +914,23 @@ function formatApiCostLabel(tool: MergedToolProfile): string {
 
 function formatHardwareLabel(tool: MergedToolProfile): string {
   const modes = tool.deploymentModes;
-  if (modes.includes('local_inference')) {
-    return '需本机或自备服务器硬件算力（建议 16GB+ 内存及独立 GPU 显存，具体取决于加载的模型尺寸）';
+  if (modes.includes('local_inference') && modes.includes('cloud_saas')) {
+    return '既可使用官方云端 SaaS（免显卡），也可下载模型在本地 NVIDIA 显卡/高配主机完成推理';
   }
-  if (modes.includes('self_hosted') && !modes.includes('cloud_saas')) {
-    return '支持本机或自有服务器 Docker/源码自托管；普通配置即可跑服务框架，若同时加载本地模型则需要独立显卡';
+  if (modes.includes('local_inference')) {
+    return '支持在本机或自有 GPU 服务器完成本地模型推理（建议 16GB+ 内存，开源大模型建议 8GB~16GB+ 独立显存）';
+  }
+  if (modes.includes('self_hosted') && modes.includes('cloud_saas')) {
+    return '支持官方云端免部署使用，也支持本机或自有服务器 Docker 私有部署（私有部署仍需配合云端 API 或本地 Ollama）';
+  }
+  if (modes.includes('self_hosted')) {
+    return '支持本机或自有服务器 Docker/源码自托管；普通配置即可运行框架，若同时加载本地模型需另配独立显卡与 Ollama';
   }
   if (modes.includes('local_client') && (modes.includes('cloud_saas') || modes.includes('cloud_agent'))) {
     return '需安装本地桌面客户端，核心模型推理在云端完成，对本机 GPU 无硬性要求';
   }
   if (modes.includes('local_client')) {
-    return '需在本机安装桌面/终端客户端；若接入云端 API 则无显卡要求，若接本地模型则需相应内存/显存';
+    return '仅需在本机安装桌面/终端客户端（模型本身默认走外部 API，若接云端 API 无需独显，接本地 Ollama 则需对应显存）';
   }
   return '云端运行，浏览器即可打开使用，对本机 CPU/显卡无特殊要求';
 }
@@ -1064,50 +1069,171 @@ function compareEvaluations(a: CandidateEvaluation, b: CandidateEvaluation): num
   return a.tool.name.localeCompare(b.tool.name, 'zh-CN');
 }
 
-function pickDiverseTopPrimary(sortedPool: CandidateEvaluation[], limit = 3): CandidateEvaluation[] {
-  if (sortedPool.length <= 1) return sortedPool.slice(0, limit);
+function getDeploymentFamily(tool: MergedToolProfile): string {
+  const modes = tool.deploymentModes;
+  if (modes.includes('local_inference')) return 'local_inference';
+  if (modes.includes('self_hosted')) return 'self_hosted';
+  if (modes.includes('local_client') && !modes.includes('cloud_saas') && !modes.includes('cloud_agent')) {
+    return 'local_client';
+  }
+  if (modes.includes('local_client')) return 'hybrid_client';
+  return 'cloud';
+}
 
-  const selected: CandidateEvaluation[] = [sortedPool[0]];
+function getBillingFamily(tool: MergedToolProfile): string {
+  if (tool.modelApiBilling === 'local_hardware') return 'local_hardware';
+  if (tool.modelApiBilling === 'byok_payg') return 'byok_payg';
+  if (tool.modelApiBilling === 'included_free') return 'included_free';
+  return 'quota_or_subscription';
+}
+
+function deriveAlternativeRoleLabel(candidate: CandidateEvaluation, top1: CandidateEvaluation): string {
+  const candFamily = getDeploymentFamily(candidate.tool);
+  const top1Family = getDeploymentFamily(top1.tool);
+
+  if (candFamily === 'local_inference' && top1Family !== 'local_inference') {
+    return '本地推理 / 开源路线';
+  }
+  if (candFamily === 'self_hosted' && top1Family !== 'self_hosted') {
+    return '私有部署 / 自托管路线';
+  }
+  if (candFamily === 'cloud' && (top1Family === 'local_inference' || top1Family === 'self_hosted' || top1Family === 'local_client')) {
+    return '纯云端免配置路线';
+  }
+  if (
+    candidate.tool.networkAvailability === 'domestic_direct' &&
+    top1.tool.networkAvailability !== 'domestic_direct'
+  ) {
+    return '国内直连替代方案';
+  }
+  if (
+    candidate.tool.modelApiBilling === 'byok_payg' &&
+    top1.tool.modelApiBilling !== 'byok_payg'
+  ) {
+    return '自带 Key / 按量可控路线';
+  }
+  if (
+    (candidate.tool.licenseType === 'open_source' || candidate.tool.licenseType === 'source_available') &&
+    top1.tool.licenseType === 'proprietary'
+  ) {
+    return '开源开放生态备选';
+  }
+  if (
+    candidate.tool.interfaces[0] === 'cli' &&
+    top1.tool.interfaces[0] !== 'cli'
+  ) {
+    return '终端 / 开发者命令行备选';
+  }
+  return '差异化主力备选';
+}
+
+function pickDiverseTopPrimary(sortedPool: CandidateEvaluation[], limit = 3): CandidateEvaluation[] {
+  if (sortedPool.length === 0) return [];
+  if (sortedPool.length === 1) {
+    return [{ ...sortedPool[0], selectionRoleLabel: '主力首选' }];
+  }
+
+  // 严格锁定 Top 1，绝不因为多样性改写最高匹配主力或篡改任何工具的真实评分
+  const top1: CandidateEvaluation = { ...sortedPool[0], selectionRoleLabel: '主力首选' };
+  const selected: CandidateEvaluation[] = [top1];
   const remaining = sortedPool.slice(1);
 
   while (selected.length < limit && remaining.length > 0) {
     let bestIdx = 0;
-    let bestEffective = -Infinity;
+    let bestSelectionPriority = -Infinity;
 
     for (let i = 0; i < remaining.length; i++) {
       const candidate = remaining[i];
+      const cap = typeof candidate.taskCapability === 'number' ? candidate.taskCapability : 0;
+      const scoreDeltaFromTop1 = top1.score - candidate.score;
+
       let diversityBonus = 0;
+      if (cap >= 3 && scoreDeltaFromTop1 <= 15) {
+        const candFamily = getDeploymentFamily(candidate.tool);
+        const candBilling = getBillingFamily(candidate.tool);
 
-      const diffBilling = selected.every(
-        (s) => s.tool.modelApiBilling !== candidate.tool.modelApiBilling,
-      );
-      const diffDeploy = selected.every(
-        (s) => s.tool.deploymentModes[0] !== candidate.tool.deploymentModes[0],
-      );
-      const diffNetwork = selected.every(
-        (s) => s.tool.networkAvailability !== candidate.tool.networkAvailability,
-      );
-      const diffInterface = selected.every(
-        (s) => s.tool.interfaces[0] !== candidate.tool.interfaces[0],
-      );
+        const diffDeployFamily = selected.every((s) => getDeploymentFamily(s.tool) !== candFamily);
+        const diffBillingFamily = selected.every((s) => getBillingFamily(s.tool) !== candBilling);
+        const diffNetwork = selected.every((s) => s.tool.networkAvailability !== candidate.tool.networkAvailability);
+        const diffLicense = selected.every((s) => s.tool.licenseType !== candidate.tool.licenseType);
+        const diffInterface = selected.every((s) => s.tool.interfaces[0] !== candidate.tool.interfaces[0]);
 
-      if (diffBilling) diversityBonus += 2;
-      if (diffDeploy) diversityBonus += 2;
-      if (diffNetwork) diversityBonus += 1.5;
-      if (diffInterface) diversityBonus += 1.5;
+        if (diffDeployFamily) diversityBonus += 6;
+        if (diffBillingFamily) diversityBonus += 4.5;
+        if (diffNetwork) diversityBonus += 3.5;
+        if (diffLicense) diversityBonus += 3;
+        if (diffInterface) diversityBonus += 2;
+      }
 
-      // 多样性加分仅用于在相近分数区间拉开差异化备选，不允许劣质候选反超明显更高分的工具
-      const effective = candidate.score + Math.min(4, diversityBonus);
-      if (effective > bestEffective) {
-        bestEffective = effective;
+      // 内部选拔优先级仅用于选出更有对比价值的 Top 2 / Top 3，绝不修改 candidate.score
+      const selectionPriority =
+        candidate.score + (cap >= 5 ? 1.5 : 0) + Math.min(12, diversityBonus);
+
+      if (selectionPriority > bestSelectionPriority) {
+        bestSelectionPriority = selectionPriority;
         bestIdx = i;
       }
     }
 
-    selected.push(remaining.splice(bestIdx, 1)[0]);
+    const picked = remaining.splice(bestIdx, 1)[0];
+    selected.push(picked);
   }
 
-  return selected.sort(compareEvaluations);
+  const alternatives = selected
+    .slice(1)
+    .sort(compareEvaluations)
+    .map((cand) => ({
+      ...cand,
+      selectionRoleLabel: deriveAlternativeRoleLabel(cand, top1),
+    }));
+
+  return [top1, ...alternatives];
+}
+
+export function detectPreferenceConflicts(answers: MatcherAnswersV2): PreferenceConflictItem[] {
+  const conflicts: PreferenceConflictItem[] = [];
+  const constraints = answers.hardConstraints;
+  if (!constraints) return conflicts;
+
+  if (
+    constraints.mustCompletelyFree &&
+    (answers.budget === 'subscription_ok' || answers.budget === 'pay_as_you_go')
+  ) {
+    conflicts.push({
+      severity: 'conflict',
+      title: '预算偏好与“必须完全免费”存在条件冲突',
+      description:
+        answers.budget === 'subscription_ok'
+          ? '你在预算偏好选择了“可接受月付订阅”，同时又勾选了“必须完全免费”。系统已严格按完全免费条件拦截付费和订阅制工具；如需查看会员订阅主力工具，可取消该硬性限制或将预算偏好调回免费路线。'
+          : '你在预算偏好选择了“按量付费 API / 自带密钥”，同时又勾选了“必须完全免费”。系统已严格过滤需按量付费的工具；如需自备密钥调用模型，请取消“必须完全免费”限制。',
+      relatedConstraint: 'mustCompletelyFree',
+      conflictingPreferenceField: 'budget',
+    });
+  }
+
+  if (constraints.mustDomesticDirect && answers.network === 'international_ok') {
+    conflicts.push({
+      severity: 'narrowing',
+      title: '网络条件偏好与“必须国内直连”叠加收窄',
+      description:
+        '你选择了“已有稳定国际网络条件”，但又勾选了“必须国内网络直连”。系统会优先执行硬性直连过滤，所有依赖海外网络或需自行配置镜像的工具都将被拦截；如需参与全球工具对比，可取消“必须国内直连”。',
+      relatedConstraint: 'mustDomesticDirect',
+      conflictingPreferenceField: 'network',
+    });
+  }
+
+  if (constraints.mustLocalRun && answers.workMode === 'web_simple') {
+    conflicts.push({
+      severity: 'narrowing',
+      title: '“网页打开即用”与“必须本地模型推理”叠加收窄',
+      description:
+        '绝大多数网页即用工具将模型部署在官方云端，无法满足“必须本机或私有服务器推理”的硬性条件。系统已按本地推理要求严格过滤；如需保留免安装浏览器体验，建议取消本地推理限制，或改选桌面客户端 / 本地可部署环境。',
+      relatedConstraint: 'mustLocalRun',
+      conflictingPreferenceField: 'workMode',
+    });
+  }
+
+  return conflicts;
 }
 
 function buildComparisonAdvice(
@@ -1116,19 +1242,28 @@ function buildComparisonAdvice(
   assistants: CandidateEvaluation[],
   excludedCount: number,
   unverifiedCount: number,
+  conflicts: PreferenceConflictItem[],
+  conditionalLocalCount: number,
+  configurableNetworkCount: number,
   constraints?: MatcherHardConstraints,
 ): { summaryAdvice: string; noPrimaryMatchReason: string | null } {
   const constraintParts: string[] = [];
-  if (constraints?.mustLocalRun) constraintParts.push('必须本地/私有运行');
+  if (constraints?.mustLocalRun) constraintParts.push('必须本地模型推理');
   if (constraints?.mustDomesticDirect) constraintParts.push('必须国内网络直连');
   if (constraints?.mustCompletelyFree) constraintParts.push('必须完全免费（软件+模型均免付费）');
   const constraintText = constraintParts.length > 0 ? `在「${constraintParts.join(' + ')}」硬性条件下，` : '';
 
   if (primaries.length === 0) {
-    const noPrimaryMatchReason = `${constraintText}当前 75 款工具库中暂无同时胜任「${taskLabel}」主力职责的工具。${
+    const conflictHint =
+      conflicts.length > 0 ? ` 检测到偏好与硬性条件收窄提示（${conflicts.map((c) => c.title).join('；')}）。` : '';
+    const conditionalHint =
+      conditionalLocalCount > 0 || configurableNetworkCount > 0
+        ? ` 下方已单独列出 ${conditionalLocalCount + configurableNetworkCount} 款“有条件可用”的相关工具说明，供确认是否放宽限制后使用。`
+        : '';
+    const noPrimaryMatchReason = `${constraintText}当前 75 款工具库中暂无同时严格满足条件且胜任「${taskLabel}」主力职责的工具。${
       unverifiedCount > 0 ? `另有 ${unverifiedCount} 款工具因关键收费或网络信息尚未核实而未纳入自动推荐。` : ''
-    }${
-      assistants.length > 0 ? ' 您可以参考下方的“配套辅助推荐”，或放宽部分硬性约束后重试。' : ' 建议放宽至少一项硬性约束条件后再试。'
+    }${conflictHint}${conditionalHint}${
+      assistants.length > 0 ? ' 您也可参考下方的“配套辅助推荐”，或放宽部分硬性约束后重试。' : ' 建议放宽至少一项硬性约束条件后再试。'
     }`;
 
     return {
@@ -1140,7 +1275,7 @@ function buildComparisonAdvice(
   const top1 = primaries[0];
   if (primaries.length === 1) {
     return {
-      summaryAdvice: `${constraintText}「${taskLabel}」下当前仅有 1 款真正胜任的主力工具「${top1.tool.name}」（规则匹配度 ${top1.score}/100）。秉持“不足不凑数”原则，系统未用辅助或底层工具充数${
+      summaryAdvice: `${constraintText}「${taskLabel}」下当前仅有 1 款严格满足条件的主力工具「${top1.tool.name}」（规则匹配度 ${top1.score}/100）。秉持“不足不凑数”原则，系统未用辅助或底层工具充数${
         excludedCount > 0 ? `（已为您严格拦截 ${excludedCount} 款不满足硬性条件的工具）` : ''
       }。`,
       noPrimaryMatchReason: null,
@@ -1164,9 +1299,9 @@ function buildComparisonAdvice(
       `付费结构上，${top1.tool.name}偏「${top1.tool.modelApiBilling === 'byok_payg' ? '自带 Key 按量计费' : top1.tool.modelApiBilling === 'local_hardware' ? '本地算力免费' : '官方含配额/订阅'}」，而 ${top2.tool.name}更适合对应另一种预算偏好`,
     );
   }
-  if (top1.tool.deploymentModes[0] !== top2.tool.deploymentModes[0]) {
+  if (getDeploymentFamily(top1.tool) !== getDeploymentFamily(top2.tool)) {
     diffs.push(
-      `部署方式上，${top1.tool.name}侧重「${top1.tool.deploymentModes[0] === 'cloud_saas' || top1.tool.deploymentModes[0] === 'cloud_agent' ? '云端即用' : '本地客户端/自托管'}」，${top2.tool.name}则提供不同运行时态`,
+      `部署方式上，${top1.tool.name}侧重「${getDeploymentFamily(top1.tool) === 'cloud' ? '云端即用' : getDeploymentFamily(top1.tool) === 'local_inference' ? '本地模型推理' : '客户端/自托管'}」，${top2.tool.name}则提供不同运行时态`,
     );
   }
 
@@ -1185,22 +1320,65 @@ function buildComparisonAdvice(
 // 主入口：evaluateToolMatches
 // ============================================================================
 
+function passesConstraintExcept(
+  tool: MergedToolProfile,
+  constraints: MatcherHardConstraints | undefined,
+  skip: 'mustLocalRun' | 'mustDomesticDirect',
+): boolean {
+  if (!constraints) return true;
+  const sub: MatcherHardConstraints = {
+    mustLocalRun: skip === 'mustLocalRun' ? false : constraints.mustLocalRun,
+    mustDomesticDirect: skip === 'mustDomesticDirect' ? false : constraints.mustDomesticDirect,
+    mustCompletelyFree: constraints.mustCompletelyFree,
+  };
+  return checkHardConstraints(tool, sub).passed;
+}
+
 export function evaluateToolMatches(
   navTools: NavTool[],
   answers: MatcherAnswersV2,
 ): MatcherRecommendationReport {
   const mergedTools = mergeNavToolsWithCapabilities(navTools);
   const isInfraTask = INFRASTRUCTURE_PRIMARY_TASKS.has(answers.task);
+  const preferenceConflicts = detectPreferenceConflicts(answers);
 
   const evaluations = mergedTools.map((tool) => evaluateTool(tool, answers));
 
   let excludedHardConstraintCount = 0;
   const unverifiedHardConstraintTools: CandidateEvaluation[] = [];
   const passedTools: CandidateEvaluation[] = [];
+  const conditionalLocalPool: CandidateEvaluation[] = [];
+  const configurableNetworkPool: CandidateEvaluation[] = [];
 
   for (const ev of evaluations) {
+    const cap = typeof ev.taskCapability === 'number' ? ev.taskCapability : 0;
+    const isTaskCompetentPrimary =
+      (ev.roleForTask === 'primary' || (ev.roleForTask === 'infrastructure' && isInfraTask)) &&
+      cap >= 3;
+
     if (ev.hardConstraintStatus.failedReasons.length > 0) {
       excludedHardConstraintCount += 1;
+
+      if (isTaskCompetentPrimary && passesConstraintExcept(ev.tool, answers.hardConstraints, 'mustLocalRun')) {
+        const isSelfHostOrPureClient =
+          !ev.tool.deploymentModes.includes('local_inference') &&
+          (ev.tool.deploymentModes.includes('self_hosted') ||
+            (ev.tool.deploymentModes.includes('local_client') &&
+              !ev.tool.deploymentModes.includes('cloud_saas') &&
+              !ev.tool.deploymentModes.includes('cloud_agent')));
+        if (answers.hardConstraints?.mustLocalRun && isSelfHostOrPureClient) {
+          conditionalLocalPool.push(ev);
+        }
+      }
+
+      if (
+        isTaskCompetentPrimary &&
+        answers.hardConstraints?.mustDomesticDirect &&
+        ev.tool.networkAvailability === 'partial_or_byok' &&
+        passesConstraintExcept(ev.tool, answers.hardConstraints, 'mustDomesticDirect')
+      ) {
+        configurableNetworkPool.push(ev);
+      }
     } else if (ev.hardConstraintStatus.unverifiedReasons.length > 0) {
       unverifiedHardConstraintTools.push(ev);
     } else {
@@ -1229,11 +1407,15 @@ export function evaluateToolMatches(
   primaryPool.sort(compareEvaluations);
   assistantPool.sort(compareEvaluations);
   infraNotePool.sort(compareEvaluations);
+  conditionalLocalPool.sort(compareEvaluations);
+  configurableNetworkPool.sort(compareEvaluations);
   unverifiedHardConstraintTools.sort((a, b) => a.tool.name.localeCompare(b.tool.name, 'zh-CN'));
 
   const primaryRecommendations = pickDiverseTopPrimary(primaryPool, 3);
   const assistantRecommendations = assistantPool.slice(0, 3);
   const infrastructureNoteCandidates = infraNotePool.slice(0, 2);
+  const conditionalLocalCandidates = conditionalLocalPool.slice(0, 3);
+  const configurableNetworkCandidates = configurableNetworkPool.slice(0, 3);
 
   const taskMeta = TASK_META[answers.task];
   const sceneMeta = SCENE_META[answers.scene];
@@ -1244,6 +1426,9 @@ export function evaluateToolMatches(
     assistantRecommendations,
     excludedHardConstraintCount,
     unverifiedHardConstraintTools.length,
+    preferenceConflicts,
+    conditionalLocalCandidates.length,
+    configurableNetworkCandidates.length,
     answers.hardConstraints,
   );
 
@@ -1255,8 +1440,11 @@ export function evaluateToolMatches(
     primaryRecommendations,
     assistantRecommendations,
     infrastructureNoteCandidates,
+    conditionalLocalCandidates,
+    configurableNetworkCandidates,
     unverifiedHardConstraintTools,
     excludedHardConstraintCount,
+    preferenceConflicts,
     summaryAdvice,
     noPrimaryMatchReason,
     engineNotice: ENGINE_NOTICE,

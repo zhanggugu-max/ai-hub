@@ -503,7 +503,7 @@ function runBoundaryAssertions() {
   assert.ok(b5.noPrimaryMatchReason && b5.noPrimaryMatchReason.length > 10);
   console.log('✓ B5: 建站+完全免费硬约束下诚实返回 0 个主力工具与原因说明');
 
-  // B6: mustLocalRun=true 不得出现纯云端工具或连云闭源客户端
+  // B6: mustLocalRun=true 仅允许 confirmed local_inference 入围主力榜；self_hosted / 纯 local_client 隔离至 conditionalLocalCandidates
   const b6 = evaluateMatcherReport(NAV_TOOLS, {
     scene: 'desktop_agent',
     task: 'desktop_automation',
@@ -514,20 +514,14 @@ function runBoundaryAssertions() {
   });
   for (const ev of [...b6.primaryRecommendations, ...b6.assistantRecommendations]) {
     assert.ok(
-      !['cloud_saas', 'cloud_agent'].every((m) => ev.tool.deploymentModes.length === 1 && ev.tool.deploymentModes[0] === m),
-      `${ev.tool.id} 不应通过 mustLocalRun`,
-    );
-    assert.ok(
-      ev.tool.deploymentModes.includes('local_inference') ||
-        ev.tool.deploymentModes.includes('self_hosted') ||
-        (!ev.tool.deploymentModes.includes('cloud_saas') &&
-          !ev.tool.deploymentModes.includes('cloud_agent')),
-      `${ev.tool.id} 连云依赖未通过 mustLocalRun 严格校验`,
+      ev.tool.deploymentModes.includes('local_inference'),
+      `${ev.tool.id} 未确认支持 local_inference，不应进入 mustLocalRun 严格推荐列表`,
     );
   }
-  console.log('✓ B6: mustLocalRun 硬性拦截纯云端与连云客户端生效');
+  assert.ok(b6.conditionalLocalCandidates.length >= 1, '应单独披露支持自托管或本地客户端的有条件候选');
+  console.log('✓ B6: mustLocalRun 严格要求 local_inference，自托管/本地客户端均隔离至有条件提示区');
 
-  // B7: mustDomesticDirect=true 不得出现 international_required 或 unknown
+  // B7: mustDomesticDirect=true 严格仅允许 domestic_direct，拦截 international_required / unknown / partial_or_byok
   const b7 = evaluateMatcherReport(NAV_TOOLS, {
     scene: 'desktop_agent',
     task: 'desktop_automation',
@@ -537,11 +531,10 @@ function runBoundaryAssertions() {
     hardConstraints: { mustDomesticDirect: true },
   });
   for (const ev of [...b7.primaryRecommendations, ...b7.assistantRecommendations]) {
-    assert.notEqual(ev.tool.networkAvailability, 'international_required');
-    assert.notEqual(ev.tool.networkAvailability, 'unknown');
+    assert.equal(ev.tool.networkAvailability, 'domestic_direct');
   }
   assert.ok(b7.unverifiedHardConstraintTools.some((u) => u.tool.id === 'lava-workspace'));
-  console.log('✓ B7: mustDomesticDirect 硬性拦截海外工具并将 unknown（Lava）放入未核实名单');
+  console.log('✓ B7: mustDomesticDirect 仅允许开箱 domestic_direct（BYOK 单独披露，unknown 进未核实名单）');
 
   // B8: unknown 字段绝不默认视为高置信度或完全满足
   const b8 = evaluateMatcherReport(NAV_TOOLS, {
@@ -581,7 +574,187 @@ function runBoundaryAssertions() {
   console.log('✓ B10: 音频转写场景准确命中国内语音生态主力并区分收费口径\n');
 }
 
+function runBlindAndAuditAssertions() {
+  console.log('=== 4. 二轮审计盲测（10 组跨场景泛化 + 多样性 + 口径真实性）===');
+
+  // BL01: 全库 fieldEvidence 75/75 完整覆盖
+  const merged = mergeNavToolsWithCapabilities(NAV_TOOLS);
+  for (const t of merged) {
+    assert.ok(
+      t.fieldEvidence && Object.keys(t.fieldEvidence).length >= 1,
+      `${t.id}: 缺少 fieldEvidence 溯源记录`,
+    );
+  }
+  console.log('✓ BL01: 75 款工具 fieldEvidence 全量覆盖');
+
+  // BL02: 学术命令行 + 完全免费 + 国内偏好 => huggingface-hub 不再错位夺冠
+  const bl02 = evaluateMatcherReport(NAV_TOOLS, {
+    scene: 'research_learning',
+    task: 'literature_search',
+    budget: 'completely_free',
+    network: 'domestic_direct',
+    workMode: 'cli_terminal',
+  });
+  assert.ok(
+    bl02.primaryRecommendations[0]?.tool.id !== 'huggingface-hub',
+    'huggingface-hub 不应在命令行文献检索夺冠',
+  );
+  console.log(`✓ BL02: 学术命令行检索 Top1=${bl02.primaryRecommendations[0]?.tool.name ?? '空'}（Hugging Face 已回归助手位）`);
+
+  // BL03: AI 视频 + mustLocalRun => 仅 ComfyUI 通过，云端视频工具被拦截
+  const bl03 = evaluateMatcherReport(NAV_TOOLS, {
+    scene: 'visual_creation',
+    task: 'video_generation',
+    budget: 'no_preference',
+    network: 'domestic_direct',
+    workMode: 'local_custom',
+    hardConstraints: { mustLocalRun: true },
+  });
+  assert.deepEqual(
+    bl03.primaryRecommendations.map((c) => c.tool.id),
+    ['comfyui'],
+  );
+  console.log('✓ BL03: AI 视频 + mustLocalRun 严格仅推荐 ComfyUI');
+
+  // BL04: 语音克隆与配音 + mustLocalRun + mustDomesticDirect => Fish Audio 入选且授权口径为 source_available
+  const bl04 = evaluateMatcherReport(NAV_TOOLS, {
+    scene: 'audio_meeting',
+    task: 'audio_music',
+    budget: 'no_preference',
+    network: 'domestic_direct',
+    workMode: 'local_custom',
+    hardConstraints: { mustLocalRun: true, mustDomesticDirect: true },
+  });
+  assert.equal(bl04.primaryRecommendations[0]?.tool.id, 'fish-audio');
+  assert.equal(bl04.primaryRecommendations[0]?.tool.licenseType, 'source_available');
+  console.log('✓ BL04: Fish Audio 本地推理 + source_available 口径核验通过');
+
+  // BL05: 桌面自动化 + mustCompletelyFree => 诚实返回 0 主力推荐
+  const bl05 = evaluateMatcherReport(NAV_TOOLS, {
+    scene: 'desktop_agent',
+    task: 'desktop_automation',
+    budget: 'completely_free',
+    network: 'domestic_direct',
+    workMode: 'desktop_client',
+    hardConstraints: { mustCompletelyFree: true },
+  });
+  assert.equal(bl05.primaryRecommendations.length, 0);
+  console.log('✓ BL05: 桌面自动化 + 必须完全免费诚实空结果');
+
+  // BL06: hybrid self_hosted + cloud_saas 硬件文案核查（Dify / n8n / FastGPT）
+  const bl06 = evaluateMatcherReport(NAV_TOOLS, {
+    scene: 'workflow_automation',
+    task: 'workflow_auto',
+    budget: 'self_host_control',
+    network: 'domestic_direct',
+    workMode: 'local_custom',
+  });
+  for (const id of ['dify', 'fastgpt']) {
+    const found = bl06.primaryRecommendations.find((c) => c.tool.id === id);
+    if (found) {
+      assert.ok(found.hardwareRequirementLabel.includes('Docker'), `${id} 未披露 Docker 私有部署`);
+      assert.ok(found.hardwareRequirementLabel.includes('云端'), `${id} 未披露云端 SaaS 形态`);
+    }
+  }
+  console.log('✓ BL06: hybrid self_hosted+cloud_saas 硬件文案准确同时说明云端与 Docker');
+
+  // BL07: 偏好冲突与收窄告警（零内部变量名泄露 + 不静默清除硬约束）
+  const bl07 = evaluateMatcherReport(NAV_TOOLS, {
+    scene: 'coding_web',
+    task: 'website_build',
+    budget: 'subscription_ok',
+    network: 'international_ok',
+    workMode: 'web_simple',
+    hardConstraints: {
+      mustCompletelyFree: true,
+      mustDomesticDirect: true,
+      mustLocalRun: true,
+    },
+  });
+  assert.equal(bl07.preferenceConflicts.length, 3);
+  assert.equal(bl07.preferenceConflicts[0].severity, 'conflict');
+  assert.equal(bl07.answers.hardConstraints?.mustCompletelyFree, true);
+  for (const c of bl07.preferenceConflicts) {
+    assert.ok(!/mustLocalRun|web_simple|subscription_ok|international_ok/.test(c.title + c.description));
+  }
+  console.log('✓ BL07: 偏好冲突/收窄 3 类检测准确、无内部变量名泄露且不静默取消约束');
+
+  // BL08: Top 2 / Top 3 替代多样性检查（桌面自动化、视频生成、文件整理、深度调研）
+  const diversityTasks: Array<{ scene: SceneKey; task: TaskKey }> = [
+    { scene: 'desktop_agent', task: 'desktop_automation' },
+    { scene: 'office_efficiency', task: 'file_automation' },
+    { scene: 'visual_creation', task: 'video_generation' },
+    { scene: 'research_learning', task: 'deep_research' },
+  ];
+  for (const pair of diversityTasks) {
+    const res = evaluateMatcherReport(NAV_TOOLS, {
+      scene: pair.scene,
+      task: pair.task,
+      budget: 'no_preference',
+      network: 'no_preference',
+      workMode: 'no_preference',
+    });
+    assert.ok(res.primaryRecommendations.length >= 2, `${pair.task} 应至少有 2 个主力推荐`);
+    // Top 1 分数 >= Top 2 >= Top 3（确保真实 score 未被篡改倒挂）
+    for (let i = 1; i < res.primaryRecommendations.length; i++) {
+      assert.ok(
+        res.primaryRecommendations[0].score >= res.primaryRecommendations[i].score,
+        `${pair.task}: Top 1 被越位替换`,
+      );
+    }
+    if (res.primaryRecommendations.length >= 3) {
+      assert.ok(
+        res.primaryRecommendations[1].score >= res.primaryRecommendations[2].score,
+        `${pair.task}: Top 2 与 Top 3 排序未按真实分顺延`,
+      );
+    }
+    const distinctAxes = new Set(
+      res.primaryRecommendations.map(
+        (c) => `${c.tool.deploymentModes[0]}|${c.tool.modelApiBilling}|${c.tool.networkAvailability}`,
+      ),
+    );
+    assert.ok(distinctAxes.size >= 2, `${pair.task}: Top 1~3 架构属性过于同质`);
+  }
+  console.log('✓ BL08: Top 1 稳定不篡改分值下，4 类核心任务 Top 2/3 路线多样性达标');
+
+  // BL09: api_management + domestic_direct + mustDomesticDirect => OpenRouter 被拦截，partial_or_byok 客户端单独披露
+  const bl09 = evaluateMatcherReport(NAV_TOOLS, {
+    scene: 'model_local',
+    task: 'api_management',
+    budget: 'pay_as_you_go',
+    network: 'domestic_direct',
+    workMode: 'web_simple',
+    hardConstraints: { mustDomesticDirect: true },
+  });
+  assert.ok(!bl09.primaryRecommendations.some((c) => c.tool.id === 'openrouter'));
+  assert.ok(!bl09.primaryRecommendations.some((c) => c.tool.id === 'cherry-studio'));
+  assert.ok(bl09.configurableNetworkCandidates.some((c) => c.tool.id === 'cherry-studio'));
+  console.log('✓ BL09: api_management 严格直连拦截 OpenRouter 并将 Cherry Studio 移至自配提示区');
+
+  // BL10: 本地免费写作/知识管理（Obsidian AI + 国内直连未勾选硬限制 vs 硬限制）
+  const bl10a = evaluateMatcherReport(NAV_TOOLS, {
+    scene: 'research_learning',
+    task: 'paper_reading',
+    budget: 'pay_as_you_go',
+    network: 'domestic_direct',
+    workMode: 'local_custom',
+    hardConstraints: { mustDomesticDirect: false },
+  });
+  assert.ok(bl10a.primaryRecommendations.some((c) => c.tool.id === 'obsidian-ai' || c.tool.id === 'zotero-ai'));
+  const bl10b = evaluateMatcherReport(NAV_TOOLS, {
+    scene: 'research_learning',
+    task: 'paper_reading',
+    budget: 'pay_as_you_go',
+    network: 'domestic_direct',
+    workMode: 'local_custom',
+    hardConstraints: { mustDomesticDirect: true },
+  });
+  assert.ok(bl10b.primaryRecommendations.every((c) => c.tool.networkAvailability === 'domestic_direct'));
+  console.log('✓ BL10: 本地插件型工具在宽松与严格直连约束下的分流逻辑正确\n');
+}
+
 runIntegrityChecks();
 runTwentyScenarioTests();
 runBoundaryAssertions();
-console.log('🎉 全部 75 工具完整性校验 + 20 场景测试 + 10 项边界断言 100% 通过！');
+runBlindAndAuditAssertions();
+console.log('🎉 全部 75 工具完整性校验 + 20 场景 + 10 边界断言 + 10 盲测审计 100% 通过！');

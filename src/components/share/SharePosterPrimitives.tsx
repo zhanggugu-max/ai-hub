@@ -50,29 +50,29 @@ export function ShareImageModal({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-2.5 backdrop-blur-xs sm:p-4"
       onClick={onClose}
     >
       <div
         className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            <h3 className="text-sm font-bold text-slate-900 sm:text-base">{title}</h3>
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:gap-3 sm:px-5 sm:py-3.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+            <h3 className="truncate text-sm font-bold text-slate-900 sm:text-base">{title}</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="关闭预览"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-slate-100/90 p-4 sm:p-5">
+        <div className="flex-1 overflow-y-auto bg-slate-100/90 p-2.5 sm:p-5">
           <div className="mx-auto overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md">
             {/* eslint-disable-next-line @next/next/no-img-element -- 渲染实时生成的 data:image/png 长图预览，需支持移动端长按保存 */}
             <img
@@ -83,7 +83,7 @@ export function ShareImageModal({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-100 bg-white px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-slate-100 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3.5">
           {isMobile ? (
             <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 sm:text-sm">
               <Smartphone className="h-4 w-4 shrink-0" />

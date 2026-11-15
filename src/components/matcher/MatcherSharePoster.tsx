@@ -482,6 +482,7 @@ export function MatcherSharePoster({
                         }}
                       >
                         Top {idx + 2}
+                        {item.selectionRoleLabel ? ` · ${item.selectionRoleLabel}` : ''}
                       </span>
                       <span
                         style={{

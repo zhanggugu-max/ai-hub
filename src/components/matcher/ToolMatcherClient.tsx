@@ -48,6 +48,7 @@ import type {
   HardConstraintKey,
   MatcherAnswersV2,
   NetworkPreference,
+  PreferenceConflictItem,
   SceneKey,
   TaskKey,
   WorkModePreference,
@@ -168,6 +169,77 @@ function DimensionBreakdownPanel({ candidate }: { candidate: CandidateEvaluation
   );
 }
 
+function PreferenceConflictAlert({
+  conflicts,
+  onClearConstraint,
+  onAlignPreference,
+}: {
+  conflicts: PreferenceConflictItem[];
+  onClearConstraint: (key: HardConstraintKey) => void;
+  onAlignPreference: (field: PreferenceConflictItem['conflictingPreferenceField']) => void;
+}) {
+  if (conflicts.length === 0) return null;
+
+  const alignButtonLabel = (field: PreferenceConflictItem['conflictingPreferenceField']) => {
+    switch (field) {
+      case 'budget':
+        return '将预算偏好改为完全免费';
+      case 'network':
+        return '将网络偏好改为国内直连';
+      case 'workMode':
+        return '将使用形态改为本地可部署';
+    }
+  };
+
+  return (
+    <div className="space-y-2.5">
+      {conflicts.map((item) => {
+        const isConflict = item.severity === 'conflict';
+        return (
+          <div
+            key={`${item.relatedConstraint}-${item.conflictingPreferenceField}`}
+            className={cn(
+              'rounded-xl border p-3.5 text-xs',
+              isConflict
+                ? 'border-rose-200 bg-rose-50/70 text-rose-950'
+                : 'border-amber-200 bg-amber-50/70 text-amber-950',
+            )}
+          >
+            <div className="flex items-start gap-2">
+              <AlertTriangle
+                className={cn(
+                  'mt-0.5 h-4 w-4 shrink-0',
+                  isConflict ? 'text-rose-600' : 'text-amber-600',
+                )}
+              />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <p className="font-semibold">{item.title}</p>
+                <p className="leading-relaxed opacity-90">{item.description}</p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => onClearConstraint(item.relatedConstraint)}
+                    className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                  >
+                    取消此硬性限制
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onAlignPreference(item.conflictingPreferenceField)}
+                    className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-800 transition-colors hover:bg-blue-100"
+                  >
+                    {alignButtonLabel(item.conflictingPreferenceField)}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function PrimaryToolCard({
   candidate,
   rank,
@@ -177,38 +249,42 @@ function PrimaryToolCard({
 }) {
   const isFirst = rank === 1;
   const confMeta = CONFIDENCE_BADGE_STYLES[candidate.confidence];
+  const badgeWrapClass = 'max-w-full whitespace-normal break-words text-left leading-snug';
 
   return (
     <article
       className={cn(
-        'rounded-2xl border bg-white p-5 transition-all sm:p-6',
+        'min-w-0 max-w-full overflow-x-hidden rounded-2xl border bg-white p-4 transition-all sm:p-6',
         isFirst
           ? 'border-blue-200 bg-gradient-to-br from-white via-white to-blue-50/40 shadow-sm ring-1 ring-blue-100'
           : 'border-slate-200/90 hover:border-slate-300',
       )}
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <Badge
               className={cn(
+                badgeWrapClass,
                 isFirst
                   ? 'bg-slate-900 text-white hover:bg-slate-900'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-100',
               )}
             >
-              {isFirst ? 'Top 1 主力首选' : `Top ${rank} 差异化备选`}
+              {isFirst
+                ? 'Top 1 主力首选'
+                : `Top ${rank}${candidate.selectionRoleLabel ? ` · ${candidate.selectionRoleLabel}` : ' 差异化备选'}`}
             </Badge>
-            <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
+            <Badge variant="outline" className={cn(badgeWrapClass, 'border-slate-200 bg-slate-50 text-slate-700')}>
               {getCategoryLabel(candidate.tool.category)}
             </Badge>
-            <Badge variant="outline" className={PRICING_BADGE_STYLES[candidate.tool.pricingType]}>
+            <Badge variant="outline" className={cn(badgeWrapClass, PRICING_BADGE_STYLES[candidate.tool.pricingType])}>
               {candidate.tool.pricingType}
             </Badge>
-            <Badge variant="outline" className={confMeta.className}>
+            <Badge variant="outline" className={cn(badgeWrapClass, confMeta.className)}>
               {confMeta.label}
             </Badge>
-            <Badge variant="outline" className="border-slate-200 bg-white text-slate-600">
+            <Badge variant="outline" className={cn(badgeWrapClass, 'border-slate-200 bg-white text-slate-600')}>
               数据完整度 {candidate.dataCompleteness}%
             </Badge>
           </div>
@@ -444,11 +520,29 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
     if (budgetLabel && answers.budget !== 'no_preference') tags.push(budgetLabel);
     if (netLabel && answers.network !== 'no_preference') tags.push(netLabel);
     if (modeLabel && answers.workMode !== 'no_preference') tags.push(modeLabel);
-    if (answers.hardConstraints?.mustLocalRun) tags.push('硬性：本地运行');
+    if (answers.hardConstraints?.mustLocalRun) tags.push('硬性：本地推理');
     if (answers.hardConstraints?.mustDomesticDirect) tags.push('硬性：国内直连');
     if (answers.hardConstraints?.mustCompletelyFree) tags.push('硬性：完全免费');
     return tags;
   }, [answers]);
+
+  const handleClearConstraint = (key: HardConstraintKey) => {
+    setAnswers((prev) => ({
+      ...prev,
+      hardConstraints: {
+        ...prev.hardConstraints,
+        [key]: false,
+      },
+    }));
+  };
+
+  const handleAlignPreference = (field: PreferenceConflictItem['conflictingPreferenceField']) => {
+    setAnswers((prev) => {
+      if (field === 'budget') return { ...prev, budget: 'completely_free' };
+      if (field === 'network') return { ...prev, network: 'domestic_direct' };
+      return { ...prev, workMode: 'local_custom' };
+    });
+  };
 
   const startMatchingTransition = () => {
     if (timerRef.current) {
@@ -844,6 +938,16 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
 
           {renderQuizStep()}
 
+          {currentStepIndex >= 2 && report.preferenceConflicts.length > 0 && (
+            <div className="mt-4">
+              <PreferenceConflictAlert
+                conflicts={report.preferenceConflicts}
+                onClearConstraint={handleClearConstraint}
+                onAlignPreference={handleAlignPreference}
+              />
+            </div>
+          )}
+
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
             <Button
               type="button"
@@ -915,17 +1019,23 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
           {/* 结果头部卡与硬性筛选快速切换 */}
           <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge className="gap-1 bg-blue-50 text-blue-700 hover:bg-blue-50">
-                    <Award className="h-3.5 w-3.5" />
-                    专属选型报告
+                  <Badge className="max-w-full gap-1 whitespace-normal break-words bg-blue-50 text-left text-blue-700 hover:bg-blue-50">
+                    <Award className="h-3.5 w-3.5 shrink-0" />
+                    <span>专属选型报告</span>
                   </Badge>
-                  <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
+                  <Badge
+                    variant="outline"
+                    className="max-w-full whitespace-normal break-words border-slate-200 bg-slate-50 text-left text-slate-700"
+                  >
                     目标任务：{report.taskLabel}
                   </Badge>
                   {report.excludedHardConstraintCount > 0 && (
-                    <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">
+                    <Badge
+                      variant="outline"
+                      className="max-w-full whitespace-normal break-words border-amber-200 bg-amber-50 text-left text-amber-800"
+                    >
                       已硬性拦截 {report.excludedHardConstraintCount} 款不达标工具
                     </Badge>
                   )}
@@ -991,8 +1101,8 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
               <span className="text-xs font-medium text-slate-500">硬性条件开关：</span>
               {(
                 [
-                  { key: 'mustLocalRun', label: '必须本地/私有运行' },
-                  { key: 'mustDomesticDirect', label: '必须国内网络直连' },
+                  { key: 'mustLocalRun', label: '必须本地模型推理' },
+                  { key: 'mustDomesticDirect', label: '必须开箱国内直连' },
                   { key: 'mustCompletelyFree', label: '必须完全免费（软件+模型）' },
                 ] as const
               ).map((item) => {
@@ -1021,6 +1131,16 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
               <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
               <p className="leading-relaxed">{report.engineNotice}</p>
             </div>
+
+            {report.preferenceConflicts.length > 0 && (
+              <div className="mt-3">
+                <PreferenceConflictAlert
+                  conflicts={report.preferenceConflicts}
+                  onClearConstraint={handleClearConstraint}
+                  onAlignPreference={handleAlignPreference}
+                />
+              </div>
+            )}
           </div>
 
           {/* 主力工具区（Top 1~3，宁缺毋滥） */}
@@ -1142,6 +1262,91 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
                 以下工具属于协议标准、沙箱或编排基础设施，通常需要工程师二次集成，无法开箱直接交付当前非底层任务：
                 {report.infrastructureNoteCandidates.map((item) => item.tool.name).join('、')}。
               </p>
+            </div>
+          )}
+
+          {/* 需补充硬件/外部条件方可满足硬约束的工具单独披露（不混入严格主力） */}
+          {report.conditionalLocalCandidates.length > 0 && (
+            <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4 text-xs text-amber-950 sm:p-5">
+              <p className="font-semibold text-amber-950">
+                有条件支持本地/私有部署的候选（未计入“必须本地模型推理”严格主力榜）
+              </p>
+              <p className="mt-1 leading-relaxed text-amber-900">
+                以下工具可在你自己的电脑或私有服务器安装运行，但软件本身不含内置大模型权重，仍需配合云端 API 或另行连接本地 Ollama 才可完成任务：
+              </p>
+              <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
+                {report.conditionalLocalCandidates.map((item) => (
+                  <div
+                    key={item.tool.id}
+                    className="flex min-w-0 flex-col justify-between rounded-xl border border-amber-200/80 bg-white p-3.5"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-slate-900">{item.tool.name}</span>
+                        <span className="shrink-0 tabular-nums text-[11px] font-semibold text-slate-600">
+                          {item.score}/100
+                        </span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-amber-900">
+                        {item.hardConstraintStatus.failedReasons[0]}
+                      </p>
+                    </div>
+                    <div className="mt-2.5">
+                      <a
+                        href={item.tool.officialUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 hover:underline"
+                      >
+                        <span>官网查看详情</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {report.configurableNetworkCandidates.length > 0 && (
+            <div className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4 text-xs text-amber-950 sm:p-5">
+              <p className="font-semibold text-amber-950">
+                可配置国内模型的候选（未计入“开箱国内直连”严格主力榜）
+              </p>
+              <p className="mt-1 leading-relaxed text-amber-900">
+                以下软件本体或客户端在国内通常可启动，但仍需要你自己填写国内大模型 API（如 DeepSeek / 硅基流动 / 阿里云百炼）或本地 Ollama 才可全程国内直连：
+              </p>
+              <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
+                {report.configurableNetworkCandidates.map((item) => (
+                  <div
+                    key={item.tool.id}
+                    className="flex min-w-0 flex-col justify-between rounded-xl border border-amber-200/80 bg-white p-3.5"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-slate-900">{item.tool.name}</span>
+                        <span className="shrink-0 tabular-nums text-[11px] font-semibold text-slate-600">
+                          {item.score}/100
+                        </span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed text-amber-900">
+                        {item.hardConstraintStatus.failedReasons[0]}
+                      </p>
+                    </div>
+                    <div className="mt-2.5">
+                      <a
+                        href={item.tool.officialUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 hover:underline"
+                      >
+                        <span>官网查看详情</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

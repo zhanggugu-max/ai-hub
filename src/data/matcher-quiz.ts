@@ -340,13 +340,15 @@ export const HARD_CONSTRAINT_OPTIONS: Record<
   },
   network: {
     key: 'mustDomesticDirect',
-    label: '硬性筛选：必须国内网络直连可用',
-    description: '严格拦截需国际网络的工具，以及国内网络状态尚未核实的工具（不默认假定可直连）',
+    label: '硬性筛选：必须开箱国内网络直连可用',
+    description:
+      '严格排除需国际网络、状态未核实，以及仅客户端免费但需自备国内 API/镜像的产品；满足后才进入主力推荐',
   },
   workMode: {
     key: 'mustLocalRun',
-    label: '硬性筛选：必须支持本地运行或私有化部署',
-    description: '严格排除仅支持云端 SaaS / 云端 Agent 或依赖官方云端运行的工具；未核实工具不入围',
+    label: '硬性筛选：必须支持本地模型推理',
+    description:
+      '仅限已核实可在本地/自有硬件直接跑模型推理的工具，严格排除仅连云客户端或仍需外接云端 API 的自托管框架',
   },
 };
 
