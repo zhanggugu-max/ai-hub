@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { BookOpenText, ExternalLink, Search, Sparkles, X } from 'lucide-react';
+import { BookOpenText, ExternalLink, Gift, Search, Sparkles, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getToolReferral } from '@/config/monetization';
 import {
   NAV_CATEGORIES,
   type NavTool,
@@ -31,7 +32,9 @@ function NavToolCard({ tool }: { tool: NavTool }) {
   const tutorialHref = tool.resourceSlug
     ? `/resources/${encodeURIComponent(tool.resourceSlug)}`
     : `/search?q=${encodeURIComponent(tool.searchKeyword)}`;
-  const targetUrl = tool.affiliateUrl || tool.officialUrl;
+  const referral = getToolReferral(tool.id);
+  const targetUrl = referral?.referralUrl || tool.affiliateUrl || tool.officialUrl;
+  const isSponsored = Boolean(referral?.referralUrl || tool.affiliateUrl);
 
   return (
     <article className="flex h-full flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-2xs transition-colors hover:border-blue-300">
@@ -86,13 +89,23 @@ function NavToolCard({ tool }: { tool: NavTool }) {
         <a
           href={targetUrl}
           target="_blank"
-          rel={tool.affiliateUrl ? 'noopener noreferrer sponsored' : 'noopener noreferrer'}
+          rel={isSponsored ? 'noopener noreferrer sponsored' : 'noopener noreferrer'}
           className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-600"
         >
           <span>直达官网</span>
           <ExternalLink className="h-3 w-3 opacity-85" />
         </a>
       </div>
+
+      {referral?.perkLabel && (
+        <div className="mt-2.5 flex items-start gap-1.5 rounded-lg border border-blue-100 bg-blue-50/50 px-2.5 py-2 text-[11px] leading-relaxed text-slate-700">
+          <Gift className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
+          <div className="min-w-0">
+            <p>{referral.perkLabel}</p>
+            <p className="mt-0.5 text-[10px] text-slate-400">含站长邀请福利，不影响推荐排序</p>
+          </div>
+        </div>
+      )}
     </article>
   );
 }

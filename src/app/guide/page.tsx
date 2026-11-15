@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { ChevronRight, GraduationCap, Home } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { GuideClient } from '@/components/guide/GuideClient';
-import { ServiceSupportCard } from '@/components/monetization/ServiceSupportCard';
+import { ApiPartnerPerksSection } from '@/components/monetization/ApiPartnerPerksSection';
 import {
   AI_GLOSSARY,
   GUIDE_STEPS,
@@ -68,7 +68,7 @@ export default function GuidePage() {
 
         <GuideClient />
 
-        <ServiceSupportCard />
+        <ApiPartnerPerksSection />
       </div>
     </main>
   );

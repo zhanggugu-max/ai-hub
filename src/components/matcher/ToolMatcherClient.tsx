@@ -13,6 +13,7 @@ import {
   ChevronUp,
   Cpu,
   ExternalLink,
+  Gift,
   Globe,
   Image as ImageIcon,
   Info,
@@ -26,7 +27,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ServiceSupportCard } from '@/components/monetization/ServiceSupportCard';
+import { getToolReferral } from '@/config/monetization';
 import { ShareImageModal } from '@/components/share/SharePosterPrimitives';
 import { MatcherSharePoster } from './MatcherSharePoster';
 import { exportElementToPng } from '@/lib/share-image';
@@ -250,6 +251,10 @@ function PrimaryToolCard({
   const isFirst = rank === 1;
   const confMeta = CONFIDENCE_BADGE_STYLES[candidate.confidence];
   const badgeWrapClass = 'max-w-full whitespace-normal break-words text-left leading-snug';
+  const referral = getToolReferral(candidate.tool.id);
+  const targetUrl =
+    referral?.referralUrl || candidate.tool.affiliateUrl || candidate.tool.officialUrl;
+  const isSponsored = Boolean(referral?.referralUrl || candidate.tool.affiliateUrl);
 
   return (
     <article
@@ -453,9 +458,9 @@ function PrimaryToolCard({
           )}
 
           <a
-            href={candidate.tool.officialUrl}
+            href={targetUrl}
             target="_blank"
-            rel="noopener noreferrer"
+            rel={isSponsored ? 'noopener noreferrer sponsored' : 'noopener noreferrer'}
             className={cn(
               'inline-flex h-8 items-center gap-1.5 rounded-full px-4 text-xs font-medium text-white transition-colors',
               isFirst ? 'bg-slate-900 hover:bg-slate-800' : 'bg-blue-600 hover:bg-blue-700',
@@ -466,6 +471,18 @@ function PrimaryToolCard({
           </a>
         </div>
       </div>
+
+      {referral?.perkLabel && (
+        <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50/50 px-3.5 py-2 text-xs leading-relaxed text-slate-700">
+          <Gift className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
+          <div className="min-w-0">
+            <span className="break-words">{referral.perkLabel}</span>
+            <span className="ml-1.5 text-[11px] text-slate-400">
+              （含站长邀请福利，不影响推荐排序）
+            </span>
+          </div>
+        </div>
+      )}
 
       <DimensionBreakdownPanel candidate={candidate} />
     </article>
@@ -1210,44 +1227,56 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                {report.assistantRecommendations.map((item) => (
-                  <div
-                    key={item.tool.id}
-                    className="flex flex-col justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 p-4"
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <Badge variant="outline" className="border-slate-200 bg-white text-[11px] text-slate-600">
-                          配套辅助
-                        </Badge>
-                        <span className="text-xs font-semibold tabular-nums text-slate-600">
-                          协同契合 {item.score}/100
-                        </span>
-                      </div>
-                      <h4 className="text-sm font-bold text-slate-900">{item.tool.name}</h4>
-                      <p className="text-xs leading-relaxed text-slate-600">
-                        {item.reasons[0] ?? item.tool.tagline}
-                      </p>
-                      {item.limitations[0] && (
-                        <p className="text-[11px] leading-relaxed text-amber-800">
-                          定位边界：{item.limitations[0]}
-                        </p>
-                      )}
-                    </div>
+                {report.assistantRecommendations.map((item) => {
+                  const referral = getToolReferral(item.tool.id);
+                  const targetUrl =
+                    referral?.referralUrl || item.tool.affiliateUrl || item.tool.officialUrl;
+                  const isSponsored = Boolean(referral?.referralUrl || item.tool.affiliateUrl);
 
-                    <div className="mt-3 pt-2">
-                      <a
-                        href={item.tool.officialUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline"
-                      >
-                        <span>了解详情</span>
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                  return (
+                    <div
+                      key={item.tool.id}
+                      className="flex flex-col justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 p-4"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <Badge variant="outline" className="border-slate-200 bg-white text-[11px] text-slate-600">
+                            配套辅助
+                          </Badge>
+                          <span className="text-xs font-semibold tabular-nums text-slate-600">
+                            协同契合 {item.score}/100
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-900">{item.tool.name}</h4>
+                        <p className="text-xs leading-relaxed text-slate-600">
+                          {item.reasons[0] ?? item.tool.tagline}
+                        </p>
+                        {item.limitations[0] && (
+                          <p className="text-[11px] leading-relaxed text-amber-800">
+                            定位边界：{item.limitations[0]}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="mt-3 space-y-2 pt-2">
+                        <a
+                          href={targetUrl}
+                          target="_blank"
+                          rel={isSponsored ? 'noopener noreferrer sponsored' : 'noopener noreferrer'}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline"
+                        >
+                          <span>直达官网</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                        {referral?.perkLabel && (
+                          <p className="rounded-lg border border-blue-100 bg-blue-50/50 px-2.5 py-1.5 text-[11px] leading-relaxed text-slate-600">
+                            {referral.perkLabel}（含站长邀请福利，不影响推荐排序）
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1293,12 +1322,12 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
                     </div>
                     <div className="mt-2.5">
                       <a
-                        href={item.tool.officialUrl}
+                        href={getToolReferral(item.tool.id)?.referralUrl || item.tool.officialUrl}
                         target="_blank"
-                        rel="noopener noreferrer"
+                        rel={getToolReferral(item.tool.id) ? 'noopener noreferrer sponsored' : 'noopener noreferrer'}
                         className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 hover:underline"
                       >
-                        <span>官网查看详情</span>
+                        <span>直达官网</span>
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
@@ -1335,12 +1364,12 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
                     </div>
                     <div className="mt-2.5">
                       <a
-                        href={item.tool.officialUrl}
+                        href={getToolReferral(item.tool.id)?.referralUrl || item.tool.officialUrl}
                         target="_blank"
-                        rel="noopener noreferrer"
+                        rel={getToolReferral(item.tool.id) ? 'noopener noreferrer sponsored' : 'noopener noreferrer'}
                         className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 hover:underline"
                       >
-                        <span>官网查看详情</span>
+                        <span>直达官网</span>
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
@@ -1369,8 +1398,6 @@ export function ToolMatcherClient({ tools }: ToolMatcherClientProps) {
               </ul>
             </div>
           )}
-
-          <ServiceSupportCard />
         </section>
       )}
 

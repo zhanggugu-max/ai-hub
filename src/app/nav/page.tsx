@@ -4,7 +4,6 @@ import { ChevronRight, Home, Layers } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { NAV_CATEGORIES, NAV_TOOLS } from '@/data/nav-tools';
 import { NavExplorer } from '@/components/nav/NavExplorer';
-import { ServiceSupportCard } from '@/components/monetization/ServiceSupportCard';
 import { SITE_BRAND } from '@/config/brand';
 import { getSiteUrl } from '@/lib/site-url';
 
@@ -73,8 +72,6 @@ export default function NavPage() {
         </header>
 
         <NavExplorer tools={NAV_TOOLS} />
-
-        <ServiceSupportCard />
       </div>
     </main>
   );

@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { Check, Copy, ExternalLink, Info, Mail, MessageSquareWarning } from 'lucide-react';
+import { ExternalLink, Info, Mail, MessageSquareWarning } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,30 +10,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { SITE_BRAND } from '@/config/brand';
-import { CONTACT_CONFIG, FEEDBACK_CONFIG } from '@/config/monetization';
-
-const PLACEHOLDER_WECHAT_IDS = new Set(['', 'your_wechat_id', 'todo', 'placeholder']);
+import { FEEDBACK_CONFIG } from '@/config/monetization';
 
 export function FooterInfoActions() {
-  const [copiedWechat, setCopiedWechat] = useState(false);
-
-  const realWechatId = !PLACEHOLDER_WECHAT_IDS.has(CONTACT_CONFIG.wechatId.trim().toLowerCase())
-    ? CONTACT_CONFIG.wechatId.trim()
-    : '';
   const realEmail = FEEDBACK_CONFIG.email.trim();
   const realFormUrl = FEEDBACK_CONFIG.formUrl.trim();
-  const hasAnyChannel = Boolean(realWechatId || realEmail || realFormUrl);
-
-  const handleCopyWechat = async () => {
-    if (!realWechatId) return;
-    try {
-      await navigator.clipboard.writeText(realWechatId);
-      setCopiedWechat(true);
-      setTimeout(() => setCopiedWechat(false), 2000);
-    } catch {
-      // 忽略剪贴板权限限制
-    }
-  };
+  const hasAnyChannel = Boolean(realEmail || realFormUrl);
 
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -67,7 +48,7 @@ export function FooterInfoActions() {
             <div className="rounded-lg border border-slate-200 bg-white p-3.5 text-slate-600">
               <div className="mb-1 font-semibold text-slate-900">3. 版权与独立性声明</div>
               <p>
-                本站仅展示条目元数据、自编中文摘要及原链接，不镜像或抓取第三方全文内容；如涉及来源标注或链接需调整，欢迎随时通过反馈通道通知我们修正。
+                本站仅展示条目元数据、自编中文摘要及原链接，不镜像或抓取第三方全文内容；部分平台链接可能附带站长邀请福利并明确标注，不影响工具推荐排序与测评打分。
               </p>
             </div>
           </div>
@@ -84,23 +65,23 @@ export function FooterInfoActions() {
           <DialogHeader>
             <DialogTitle>反馈与内容纠错</DialogTitle>
             <DialogDescription>
-              发现链接失效、价格变动、测试口径描述不准确或希望补充新工具，欢迎提交纠错说明。
+              发现链接失效、价格变动、测试口径描述不准确或希望补充新工具，欢迎核对相关信息。
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 text-xs leading-relaxed text-slate-600 sm:text-sm">
             <div className="rounded-lg bg-slate-50 p-3.5">
-              <div className="mb-1.5 font-semibold text-slate-900">建议附带信息（方便快速核对）</div>
+              <div className="mb-1.5 font-semibold text-slate-900">建议核对维度</div>
               <ul className="list-disc space-y-1 pl-4 text-xs text-slate-600">
-                <li>对应页面路径或模型 / 工具名称（如榜单页某模型条目）</li>
-                <li>问题类型（链接打不开 / 定价更新 / 署名或来源标注需修正）</li>
-                <li>可核验的官方参考链接（如有）</li>
+                <li>对应页面路径或模型 / 工具名称（如榜单页或匹配器条目）</li>
+                <li>问题类型（链接失效 / 定价调整 / 署名与来源标注说明）</li>
+                <li>可核验的官方定价或文档参考链接</li>
               </ul>
             </div>
 
             {hasAnyChannel ? (
               <div className="space-y-2.5 rounded-lg border border-slate-200 bg-white p-3.5">
-                <div className="font-semibold text-slate-900">当前可用联系通道</div>
+                <div className="font-semibold text-slate-900">当前可用反馈通道</div>
                 {realFormUrl && (
                   <a
                     href={realFormUrl}
@@ -124,34 +105,12 @@ export function FooterInfoActions() {
                     <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
                   </a>
                 )}
-                {realWechatId && (
-                  <button
-                    type="button"
-                    onClick={handleCopyWechat}
-                    className="inline-flex w-full cursor-pointer items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100"
-                  >
-                    <span>微信号：{realWechatId}</span>
-                    <span className="inline-flex items-center gap-1 text-blue-600">
-                      {copiedWechat ? (
-                        <>
-                          <Check className="h-3.5 w-3.5" />
-                          已复制
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3.5 w-3.5" />
-                          复制
-                        </>
-                      )}
-                    </span>
-                  </button>
-                )}
               </div>
             ) : (
-              <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-3.5 text-xs text-amber-900">
-                <div className="font-semibold">联系渠道待站长补充</div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3.5 text-xs text-slate-600">
+                <div className="font-semibold text-slate-900">站内说明</div>
                 <p className="mt-1 leading-relaxed">
-                  当前暂未配置公开纠错邮箱、反馈问卷链接或有效微信号（本站未启用虚假提交表单）。站长可在配置文件补充真实联系方式后自动在此展示。
+                  {SITE_BRAND.name}当前以公开工具导航、能力榜单与规则选型文档为主，暂未开放公开邮箱或人工咨询入口；所有工具条目的来源出处与核实日期均已在对应页面直接标注。
                 </p>
               </div>
             )}
