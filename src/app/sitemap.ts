@@ -1,7 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { getLeaderboardSnapshots } from '@/lib/leaderboard/data-loader';
 import { getSearchItems } from '@/lib/search/data-loader';
-import { getSiteUrl } from '@/lib/site-url';
 
 function toValidDate(raw?: string): Date | undefined {
   if (!raw) return undefined;
@@ -9,15 +8,30 @@ function toValidDate(raw?: string): Date | undefined {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
+function getLatestItemDate(
+  items: Awaited<ReturnType<typeof getSearchItems>>
+): Date | undefined {
+  let latest: Date | undefined;
+  for (const item of items) {
+    const candidate = toValidDate(item.updatedAt) ?? toValidDate(item.publishedAt);
+    if (candidate && (!latest || candidate > latest)) {
+      latest = candidate;
+    }
+  }
+  return latest;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = getSiteUrl();
+  const baseUrl = (
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'https://hailanai.cc'
+  ).replace(/\/+$/, '');
   const [snapshots, items] = await Promise.all([
     getLeaderboardSnapshots(),
     getSearchItems(),
   ]);
 
   const leaderboardUpdated = toValidDate(snapshots.overall.updatedAt);
-  const latestResourceDate = toValidDate(items[0]?.updatedAt ?? items[0]?.publishedAt);
+  const latestResourceDate = getLatestItemDate(items);
   const homeUpdated =
     leaderboardUpdated && latestResourceDate
       ? leaderboardUpdated > latestResourceDate
